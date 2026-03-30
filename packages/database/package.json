@@ -12,11 +12,9 @@
     "db:seed": "tsx src/seed.ts"
   },
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+    ".": "./src/index.ts"
   },
+  "main": "./src/index.ts",
   "dependencies": {
     "@prisma/client": "^6.4.1"
   },

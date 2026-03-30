@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --version)",
+      "Bash(docker exec:*)",
+      "Bash(docker ps:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id \\(Get-Process -Id $_OwningProcess\\).Id -Force -ErrorAction SilentlyContinue }\")",
+      "Bash(docker compose:*)",
+      "Bash(pnpm --filter @jewel/api dev)",
+      "Bash(tasklist)",
+      "Bash(ngrok http:*)",
+      "Bash(curl -s http://127.0.0.1:4040/api/tunnels)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d[''''tunnels''''][0][''''public_url'''']\\)\")",
+      "Bash(where ngrok:*)",
+      "Read(//c/Users/ADMIN/**)",
+      "Bash(ls /c/ngrok*)",
+      "Read(//d/WorkSpace/Claude Projects/Jewel Chatbot/$LOCALAPPDATA/Microsoft/WinGet/Packages/**)",
+      "Read(//c/ProgramData/chocolatey/**)",
+      "Bash(npm install:*)",
+      "Bash(npx ngrok:*)"
+    ]
+  }
+}

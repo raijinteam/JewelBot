@@ -1,0 +1,183 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  name      String?
+  language  String   @default("en")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session      Session?
+  subscription Subscription?
+  credits      Credit?
+  jobs         ImageJob[]
+
+  @@map("users")
+}
+
+// ─── Session (conversation state machine) ────────────────────────────────────
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  state     String   @default("IDLE")
+  data      Json     @default("{}")
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ─── Image Generation Job ─────────────────────────────────────────────────────
+
+model ImageJob {
+  id              String    @id @default(cuid())
+  userId          String
+  status          JobStatus @default(QUEUED)
+  sourceImageUrl  String
+  templateId      String
+  jewellType      String?
+  jewellDesc      String?
+  resultImageUrl  String?
+  errorMessage    String?
+  bullJobId       String?
+  creditsUsed     Int       @default(1)
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template Template @relation(fields: [templateId], references: [id])
+
+  @@map("image_jobs")
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  DONE
+  FAILED
+}
+
+// ─── Subscription ─────────────────────────────────────────────────────────────
+
+model Subscription {
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  plan             Plan               @default(FREE)
+  status           SubscriptionStatus @default(ACTIVE)
+  currentPeriodEnd DateTime?
+  razorpaySubId    String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+enum Plan {
+  FREE
+  STARTER
+  SHOP
+  PRO
+  WHOLESALE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+// ─── Credits ──────────────────────────────────────────────────────────────────
+
+model Credit {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  balance      Int      @default(5)
+  lifetimeUsed Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credits")
+}
+
+// ─── Template ─────────────────────────────────────────────────────────────────
+
+model Template {
+  id              String   @id @default(cuid())
+  name            String
+  category        String
+  previewUrl      String
+  basePrompt      String   @db.Text
+  compatibleTypes String[] // e.g. ["ring","bangle"] or ["*"] for universal
+  planRequired    Plan     @default(FREE)
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  jobs ImageJob[]
+
+  @@map("templates")
+}
+
+// ─── Customer Ledger ──────────────────────────────────────────────────────────
+
+model LedgerCustomer {
+  id          String   @id @default(cuid())
+  ownerPhone  String
+  name        String
+  outstanding Int      @default(0)  // in paise (1 rupee = 100 paise)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactions LedgerTransaction[]
+
+  @@unique([ownerPhone, name])
+  @@map("ledger_customers")
+}
+
+model LedgerTransaction {
+  id          String          @id @default(cuid())
+  customerId  String
+  type        LedgerEntryType
+  amount      Int             // in paise
+  description String?
+  createdAt   DateTime        @default(now())
+
+  customer LedgerCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("ledger_transactions")
+}
+
+enum LedgerEntryType {
+  CREDIT
+  PAYMENT
+}
+
+// ─── App Config ───────────────────────────────────────────────────────────────
+
+model AppConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("app_config")
+}

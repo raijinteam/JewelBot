@@ -8,6 +8,7 @@ import { showLiveRates } from './price-calc.handler.js'
 import { startBillingCalc } from './billing-calc.handler.js'
 import { showLedgerMenu } from './ledger.handler.js'
 import { showUpgradeMenu } from './upgrade.handler.js'
+import { showBizProfile } from './business-profile.handler.js'
 
 const WELCOME_NEW = (name: string) =>
   `Welcome to *JewelAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *5 free photo generations* to start.`
@@ -48,6 +49,7 @@ async function showWelcome(
         rows: [
           { id: 'view_credits', title: '💳 My Credits', description: 'Check your remaining credits' },
           { id: 'upgrade', title: '⬆️ Upgrade Plan', description: 'Get more credits & features' },
+          { id: 'my_business', title: '⚙️ My Business', description: 'View & edit business profile' },
           { id: 'help', title: '❓ Help', description: 'How to use JewelAI' },
         ],
       },
@@ -95,6 +97,10 @@ export async function handleIdleInteractive(
   }
   if (replyId === 'upgrade') {
     await showUpgradeMenu(phone, fastify)
+    return
+  }
+  if (replyId === 'my_business') {
+    await showBizProfile(phone, fastify)
     return
   }
   if (replyId === 'help') {

@@ -37,6 +37,13 @@ import {
   handleLedgerViewName,
 } from '../handlers/ledger.handler.js'
 import { handleUpgradeSelect } from '../handlers/upgrade.handler.js'
+import {
+  handleBizName,
+  handleBizGstin,
+  handleBizAddress,
+  handleBizState,
+  handleBizPhone,
+} from '../handlers/business-profile.handler.js'
 import { normalizePhone } from '../shared/utils.js'
 import { logger } from '../shared/logger.js'
 
@@ -179,6 +186,21 @@ async function dispatchMessage(
 
     case STATES.UPGRADE_SELECT:
       return handleUpgradeSelect(message, phone, fastify)
+
+    case STATES.BIZ_NAME:
+      return handleBizName(message, phone, fastify)
+
+    case STATES.BIZ_GSTIN:
+      return handleBizGstin(message, phone, fastify)
+
+    case STATES.BIZ_ADDRESS:
+      return handleBizAddress(message, phone, fastify)
+
+    case STATES.BIZ_STATE:
+      return handleBizState(message, phone, fastify)
+
+    case STATES.BIZ_PHONE:
+      return handleBizPhone(message, phone, fastify)
 
     default:
       return handleIdle(message, phone, contactName, fastify)

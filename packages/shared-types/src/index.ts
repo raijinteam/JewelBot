@@ -26,6 +26,11 @@ export type SessionState =
   | 'LEDGER_PAY_AMOUNT'
   | 'LEDGER_VIEW_NAME'
   | 'UPGRADE_SELECT'
+  | 'BIZ_NAME'
+  | 'BIZ_GSTIN'
+  | 'BIZ_ADDRESS'
+  | 'BIZ_STATE'
+  | 'BIZ_PHONE'
 
 export interface SessionData {
   sourceImageUrl?: string
@@ -59,6 +64,12 @@ export interface SessionData {
   ledgerCustomerName?: string
   ledgerCustomerId?: string
   ledgerAmountPaise?: number
+  // Business profile setup
+  bizSetupName?: string
+  bizSetupGstin?: string
+  bizSetupAddress?: string
+  bizSetupState?: string
+  bizSetupReturnToInvoice?: boolean  // true = go to invoice after setup
 }
 
 // ─── Jewelry Analysis ─────────────────────────────────────────────────────────

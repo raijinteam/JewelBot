@@ -181,3 +181,20 @@ model AppConfig {
 
   @@map("app_config")
 }
+
+// ─── Business Profile ─────────────────────────────────────────────────────────
+
+model BusinessProfile {
+  id          String   @id @default(cuid())
+  ownerPhone  String   @unique
+  name        String
+  gstin       String?
+  address     String
+  state       String
+  stateCode   String   @default("")
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("business_profiles")
+}

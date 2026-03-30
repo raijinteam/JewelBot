@@ -3,7 +3,7 @@ import type { MetaMessage, MetaInteractiveMessage, MetaTextMessage } from '../wh
 import { sendText, sendButtons } from '../whatsapp/wa.messages.js'
 import { getSession, transitionState, resetSession } from '../session/session.service.js'
 import { ALL_METALS } from '../features/price-calculator/metals-rate.service.js'
-import { env } from '../config/env.js'
+import { prisma } from '@jewel/database'
 
 const INVOICE_COUNTER_KEY = 'invoice:counter'
 
@@ -14,6 +14,15 @@ export async function handleInvoiceCustomerName(
   phone: string,
   fastify: FastifyInstance,
 ): Promise<void> {
+  // Check business profile exists
+  const profile = await prisma.businessProfile.findUnique({ where: { ownerPhone: phone } })
+  if (!profile) {
+    const { startBizProfileSetup } = await import('./business-profile.handler.js')
+    await sendText(phone, '⚙️ Please set up your *business profile* first — it will be used on your invoices.')
+    await startBizProfileSetup(phone, fastify, true)
+    return
+  }
+
   if (message.type !== 'text') {
     await sendText(phone, 'Please type the *customer name*:')
     return
@@ -99,6 +108,13 @@ async function generateAndSendInvoice(
     return
   }
 
+  // Fetch business profile
+  const bizProfile = await prisma.businessProfile.findUnique({ where: { ownerPhone: phone } })
+  const bizName = bizProfile?.name ?? 'Your Jewelry Store'
+  const bizGstin = bizProfile?.gstin ?? ''
+  const bizAddress = bizProfile?.address ?? ''
+  const bizPhone = bizProfile?.phone ?? ''
+
   // Auto-increment invoice number
   const invoiceNum = await fastify.redis.incr(INVOICE_COUNTER_KEY)
   const invoiceId = `JWL-${String(invoiceNum).padStart(5, '0')}`
@@ -131,10 +147,10 @@ async function generateAndSendInvoice(
     `📄 *TAX INVOICE*`,
     `━━━━━━━━━━━━━━━━━━━━━━━`,
     ``,
-    `*${env.BUSINESS_NAME}*`,
-    ...(env.BUSINESS_GSTIN ? [`GSTIN: ${env.BUSINESS_GSTIN}`] : []),
-    ...(env.BUSINESS_ADDRESS ? [env.BUSINESS_ADDRESS] : []),
-    ...(env.BUSINESS_PHONE ? [`Ph: ${env.BUSINESS_PHONE}`] : []),
+    `*${bizName}*`,
+    ...(bizGstin ? [`GSTIN: ${bizGstin}`] : []),
+    ...(bizAddress ? [bizAddress] : []),
+    ...(bizPhone ? [`Ph: ${bizPhone}`] : []),
     ``,
     `───────────────────────`,
     `Invoice No: *${invoiceId}*`,
@@ -171,7 +187,7 @@ async function generateAndSendInvoice(
     ``,
     `───────────────────────`,
     `_This is a computer-generated invoice._`,
-    `_${env.BUSINESS_NAME}_`,
+    `_${bizName}_`,
   ].join('\n')
 
   await sendText(phone, invoice)

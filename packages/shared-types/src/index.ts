@@ -31,6 +31,11 @@ export type SessionState =
   | 'BIZ_ADDRESS'
   | 'BIZ_STATE'
   | 'BIZ_PHONE'
+  | 'BATCH_COLLECTING'
+  | 'BATCH_TEMPLATE'
+  | 'BATCH_ASPECT_RATIO'
+  | 'BATCH_CONFIRM'
+  | 'BATCH_PROCESSING'
   | 'FESTIVE_BRAND_LOGO'
   | 'FESTIVE_BRAND_NAME'
   | 'FESTIVE_BRAND_PHONE'
@@ -76,6 +81,12 @@ export interface SessionData {
   bizSetupAddress?: string
   bizSetupState?: string
   bizSetupReturnToInvoice?: boolean  // true = go to invoice after setup
+  // Batch image creation
+  batchImages?: { url: string; jewellType: string; description: string }[]
+  batchTemplateId?: string
+  batchTemplateName?: string
+  batchAspectRatio?: '1:1' | '9:16'
+  batchLastImageTime?: number  // timestamp of last image received, for debounce
   // Festive post
   festiveLogoUrl?: string
   festiveBrandName?: string

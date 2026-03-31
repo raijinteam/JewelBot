@@ -52,6 +52,13 @@ import {
   handleFestiveFestivalInput,
   handleFestiveProcessing,
 } from '../handlers/festive-post.handler.js'
+import {
+  handleBatchCollecting,
+  handleBatchTemplate,
+  handleBatchAspectRatio,
+  handleBatchConfirm,
+  handleBatchProcessing,
+} from '../handlers/batch-create.handler.js'
 import { normalizePhone } from '../shared/utils.js'
 import { logger } from '../shared/logger.js'
 
@@ -227,6 +234,21 @@ async function dispatchMessage(
 
     case STATES.FESTIVE_PROCESSING:
       return handleFestiveProcessing(phone, fastify)
+
+    case STATES.BATCH_COLLECTING:
+      return handleBatchCollecting(message, phone, fastify)
+
+    case STATES.BATCH_TEMPLATE:
+      return handleBatchTemplate(message, phone, fastify)
+
+    case STATES.BATCH_ASPECT_RATIO:
+      return handleBatchAspectRatio(message, phone, fastify)
+
+    case STATES.BATCH_CONFIRM:
+      return handleBatchConfirm(message, phone, fastify)
+
+    case STATES.BATCH_PROCESSING:
+      return handleBatchProcessing(phone, fastify)
 
     default:
       return handleIdle(message, phone, contactName, fastify)

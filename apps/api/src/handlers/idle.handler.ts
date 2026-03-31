@@ -10,6 +10,7 @@ import { showLedgerMenu } from './ledger.handler.js'
 import { showUpgradeMenu } from './upgrade.handler.js'
 import { showBizProfile } from './business-profile.handler.js'
 import { startFestivePost } from './festive-post.handler.js'
+import { startBatchCreate } from './batch-create.handler.js'
 
 const WELCOME_NEW = (name: string) =>
   `Welcome to *JewelAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *5 free photo generations* to start.`
@@ -42,6 +43,7 @@ async function showWelcome(
           { id: 'price_calc', title: '💰 Live Rates', description: 'Live gold & silver prices' },
           { id: 'billing_calc', title: '📋 Billing Calculator', description: 'Generate itemized bill estimate' },
           { id: 'gen_invoice', title: '📄 GST Invoice', description: 'Create a tax invoice with GST' },
+          { id: 'batch_create', title: '📸 Batch Photos', description: 'Process up to 10 photos at once' },
           { id: 'festive_post', title: '🎉 Festive Posts', description: 'Create branded festival greetings' },
           { id: 'ledger', title: '📒 Udhaar Book', description: 'Track customer credit & dues' },
         ],
@@ -118,6 +120,10 @@ export async function handleIdleInteractive(
   }
   if (replyId === 'my_business') {
     await showBizProfile(phone, fastify)
+    return
+  }
+  if (replyId === 'batch_create') {
+    await startBatchCreate(phone, fastify)
     return
   }
   if (replyId === 'festive_post') {

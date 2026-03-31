@@ -239,7 +239,7 @@ export async function handleFestiveFestivalInput(
         id: jobId,
         userId: user.id,
         sourceImageUrl: logoUrl,
-        templateId: 'festive_post',
+        jobType: 'festive_post',
         status: 'QUEUED',
       },
     })

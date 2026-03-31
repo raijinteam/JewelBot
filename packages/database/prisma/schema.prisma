@@ -50,7 +50,8 @@ model ImageJob {
   userId          String
   status          JobStatus @default(QUEUED)
   sourceImageUrl  String
-  templateId      String
+  templateId      String?
+  jobType         String    @default("image_gen")
   jewellType      String?
   jewellDesc      String?
   resultImageUrl  String?
@@ -60,8 +61,8 @@ model ImageJob {
   createdAt       DateTime  @default(now())
   completedAt     DateTime?
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  template Template @relation(fields: [templateId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template Template? @relation(fields: [templateId], references: [id])
 
   @@map("image_jobs")
 }

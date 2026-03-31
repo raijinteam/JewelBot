@@ -71,7 +71,7 @@ export async function handleIdleInteractive(
   fastify: FastifyInstance,
 ): Promise<void> {
   // Features that require a paid plan
-  const paidFeatures = ['price_calc', 'billing_calc', 'gen_invoice', 'ledger', 'my_business', 'festive_post']
+  const paidFeatures = ['price_calc', 'billing_calc', 'gen_invoice', 'ledger', 'my_business']
 
   if (paidFeatures.includes(replyId)) {
     const user = await findOrCreateUser(phone)

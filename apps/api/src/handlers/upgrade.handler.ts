@@ -38,31 +38,15 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
         ],
       },
       {
-        title: 'Buy Credits',
-        rows: [
-          { id: 'buy_credits', title: '🛒 Buy Credit Pack', description: 'One-time credit purchase' },
-        ],
+        title: 'Buy Credits (One-time)',
+        rows: CREDIT_PACKS.map((pack) => ({
+          id: pack.id,
+          title: `${pack.credits} Credits — ₹${pack.priceInr}`,
+          description: `₹${(pack.priceInr / pack.credits).toFixed(1)}/credit`,
+        })),
       },
     ],
     '💳 Plans & Credits',
-  )
-}
-
-export async function showCreditPackMenu(phone: string, fastify: FastifyInstance): Promise<void> {
-  await setSession(fastify.redis, phone, 'CREDIT_PACK_SELECT', {})
-
-  const rows = CREDIT_PACKS.map((pack) => ({
-    id: pack.id,
-    title: `${pack.credits} Credits — ₹${pack.priceInr}`,
-    description: `₹${(pack.priceInr / pack.credits).toFixed(1)}/credit`,
-  }))
-
-  await sendList(
-    phone,
-    '🛒 *Buy Credits*\n\nPurchase a one-time credit pack. Credits never expire!\n\n_Each photo costs 5 credits._',
-    '🛒 Select Pack',
-    [{ title: 'Credit Packs', rows }],
-    '🛒 Credit Packs',
   )
 }
 
@@ -84,9 +68,36 @@ export async function handleUpgradeSelect(
         ? interactive.button_reply.id
         : ''
 
-  // Handle "Buy Credits" → show credit pack menu
-  if (replyId === 'buy_credits') {
-    await showCreditPackMenu(phone, fastify)
+  // Handle credit pack selection directly
+  const pack = CREDIT_PACKS.find((p) => p.id === replyId)
+  if (pack) {
+    await sendText(phone, `⏳ Generating your payment link for *${pack.credits} credits (₹${pack.priceInr})*...`)
+
+    try {
+      const link = await createPaymentLink({
+        amount: pack.priceInr,
+        customerPhone: phone,
+        planName: `CREDIT_PACK_${pack.credits}`,
+        description: `JewelAI ${pack.credits} Credits Pack — ₹${pack.priceInr}`,
+      })
+
+      await sendText(
+        phone,
+        [
+          `🛒 *${pack.credits} Credits — ₹${pack.priceInr}*`,
+          ``,
+          `Tap the link below to complete payment:`,
+          `👉 ${link.short_url}`,
+          ``,
+          `✅ Credits will be added *automatically* once payment is done.`,
+          `_Link expires in 24 hours._`,
+        ].join('\n'),
+      )
+    } catch (err) {
+      await sendText(phone, '❌ Could not generate payment link. Please try again or contact support.')
+    }
+
+    await resetSession(fastify.redis, phone)
     return
   }
 
@@ -134,53 +145,4 @@ export async function handleUpgradeSelect(
   await resetSession(fastify.redis, phone)
 }
 
-export async function handleCreditPackSelect(
-  message: MetaMessage,
-  phone: string,
-  fastify: FastifyInstance,
-): Promise<void> {
-  if (message.type !== 'interactive') {
-    await showCreditPackMenu(phone, fastify)
-    return
-  }
 
-  const interactive = (message as MetaInteractiveMessage).interactive
-  const replyId =
-    interactive?.type === 'list_reply'
-      ? interactive.list_reply.id
-      : ''
-
-  const pack = CREDIT_PACKS.find((p) => p.id === replyId)
-  if (!pack) {
-    await showCreditPackMenu(phone, fastify)
-    return
-  }
-
-  await sendText(phone, `⏳ Generating your payment link for *${pack.credits} credits (₹${pack.priceInr})*...`)
-
-  try {
-    const link = await createPaymentLink({
-      amount: pack.priceInr,
-      customerPhone: phone,
-      planName: `CREDIT_PACK_${pack.credits}`,
-      description: `JewelAI ${pack.credits} Credits Pack — ₹${pack.priceInr}`,
-    })
-
-    await sendText(
-      phone,
-      [
-        `🛒 *${pack.credits} Credits — ₹${pack.priceInr}*`,
-        ``,
-        `Tap the link below to complete payment:`,
-        `👉 ${link.short_url}`,
-        ``,
-        `✅ Credits will be added *automatically* once payment is done.`,
-        `_Link expires in 24 hours._`,
-      ].join('\n'),
-    )
-  } catch (err) {
-    await sendText(phone, '❌ Could not generate payment link. Please try again or contact support.')
-  }
-
-  await resetSession(fastify.redis, phone)
-}

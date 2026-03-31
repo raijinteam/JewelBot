@@ -119,15 +119,15 @@ const templates = [
 ]
 
 const appConfigs: { key: string; value: string }[] = [
-  { key: 'plan_price_starter', value: '299' },
-  { key: 'plan_price_shop', value: '899' },
-  { key: 'plan_price_pro', value: '1799' },
-  { key: 'plan_price_wholesale', value: '4299' },
-  { key: 'plan_credits_free', value: '5' },
-  { key: 'plan_credits_starter', value: '15' },
-  { key: 'plan_credits_shop', value: '75' },
-  { key: 'plan_credits_pro', value: '200' },
-  { key: 'plan_credits_wholesale', value: '700' },
+  { key: 'plan_price_starter', value: '149' },
+  { key: 'plan_price_shop', value: '499' },
+  { key: 'plan_price_pro', value: '999' },
+  { key: 'plan_price_wholesale', value: '1999' },
+  { key: 'plan_credits_free', value: '25' },
+  { key: 'plan_credits_starter', value: '50' },
+  { key: 'plan_credits_shop', value: '200' },
+  { key: 'plan_credits_pro', value: '500' },
+  { key: 'plan_credits_wholesale', value: '1400' },
 ]
 
 async function seed() {

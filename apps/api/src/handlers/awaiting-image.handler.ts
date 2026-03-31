@@ -6,6 +6,7 @@ import { downloadMediaBuffer } from '../whatsapp/wa.media.js'
 import { uploadBuffer } from '../storage/cloudinary.service.js'
 import { findOrCreateUser } from '../users/user.service.js'
 import { hasCredits } from '../billing/credits.service.js'
+import { CREDIT_COST_PHOTO } from '../config/constants.js'
 import { analyzeJewelryImage } from '../features/image-generation/jewelry-analyzer.js'
 import { getCompatibleTemplates } from '../features/image-generation/templates.service.js'
 import { sendTemplateGallery } from './awaiting-template.handler.js'
@@ -19,11 +20,11 @@ export async function handleAwaitingImage(
 ): Promise<void> {
   const user = await findOrCreateUser(phone)
 
-  // Credit gate
-  if (!(await hasCredits(user.id))) {
+  // Credit gate — need 5 credits per photo
+  if (!(await hasCredits(user.id, CREDIT_COST_PHOTO))) {
     await sendText(
       phone,
-      "You're out of credits 😔\n\nUpgrade to continue generating professional product photos.\n\nReply *UPGRADE* to see our plans.",
+      `You need at least *${CREDIT_COST_PHOTO} credits* to generate a photo but you don't have enough 😔\n\nType *menu* and tap *⬆️ Upgrade Plan* or *🛒 Buy Credits* to continue.`,
     )
     await transitionState(fastify.redis, phone, 'IDLE')
     return

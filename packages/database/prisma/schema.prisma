@@ -57,7 +57,7 @@ model ImageJob {
   resultImageUrl  String?
   errorMessage    String?
   bullJobId       String?
-  creditsUsed     Int       @default(1)
+  creditsUsed     Int       @default(5)
   createdAt       DateTime  @default(now())
   completedAt     DateTime?
 
@@ -111,7 +111,7 @@ enum SubscriptionStatus {
 model Credit {
   id           String   @id @default(cuid())
   userId       String   @unique
-  balance      Int      @default(5)
+  balance      Int      @default(25)
   lifetimeUsed Int      @default(0)
   updatedAt    DateTime @updatedAt
 

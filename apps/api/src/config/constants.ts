@@ -14,7 +14,10 @@ export const QUEUES = {
 } as const
 
 // Free tier lifetime credits
-export const FREE_TIER_LIFETIME_CREDITS = 5
+export const FREE_TIER_LIFETIME_CREDITS = 25
+
+// Credits consumed per photo generation
+export const CREDIT_COST_PHOTO = 5
 
 // Session state names (mirrors @jewel/shared-types SessionState)
 export const STATES = {
@@ -43,6 +46,7 @@ export const STATES = {
   LEDGER_PAY_AMOUNT: 'LEDGER_PAY_AMOUNT',
   LEDGER_VIEW_NAME: 'LEDGER_VIEW_NAME',
   UPGRADE_SELECT: 'UPGRADE_SELECT',
+  CREDIT_PACK_SELECT: 'CREDIT_PACK_SELECT',
   BIZ_NAME: 'BIZ_NAME',
   BIZ_GSTIN: 'BIZ_GSTIN',
   BIZ_ADDRESS: 'BIZ_ADDRESS',

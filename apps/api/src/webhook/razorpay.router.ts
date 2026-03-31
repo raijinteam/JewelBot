@@ -3,7 +3,10 @@ import crypto from 'crypto'
 import { prisma } from '@jewel/database'
 import { env } from '../config/env.js'
 import { sendText } from '../whatsapp/wa.messages.js'
+import { addCredits } from '../billing/credits.service.js'
+import { getPlanCredits } from '../billing/app-config.service.js'
 import { logger } from '../shared/logger.js'
+import { CREDIT_PACKS } from '@jewel/shared-types'
 
 const PLAN_LABEL: Record<string, string> = {
   STARTER: 'Starter',
@@ -45,14 +48,48 @@ export async function razorpayRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.status(200).send({ ok: true })
       }
 
-      const planKey = plan.toUpperCase() as 'STARTER' | 'SHOP' | 'PRO' | 'WHOLESALE'
-
-      // Find user and update subscription
       const user = await prisma.user.findUnique({ where: { phone } })
       if (!user) {
         logger.warn({ phone }, 'User not found for payment webhook')
         return reply.status(200).send({ ok: true })
       }
+
+      // Check if this is a credit pack purchase
+      if (plan.startsWith('CREDIT_PACK_')) {
+        const creditAmount = parseInt(plan.replace('CREDIT_PACK_', ''), 10)
+        const pack = CREDIT_PACKS.find((p) => p.credits === creditAmount)
+
+        if (!pack) {
+          logger.warn({ plan, phone }, 'Unknown credit pack')
+          return reply.status(200).send({ ok: true })
+        }
+
+        await addCredits(user.id, pack.credits)
+
+        logger.info({ phone, credits: pack.credits }, 'Credit pack purchased')
+
+        setImmediate(async () => {
+          try {
+            await sendText(
+              phone,
+              [
+                `🎉 *Payment Successful!*`,
+                ``,
+                `✅ *${pack.credits} credits* have been added to your account.`,
+                ``,
+                `Type *menu* to get started!`,
+              ].join('\n'),
+            )
+          } catch (err) {
+            logger.error({ err, phone }, 'Failed to send credit pack confirmation WhatsApp')
+          }
+        })
+
+        return reply.status(200).send({ ok: true })
+      }
+
+      // Subscription plan purchase
+      const planKey = plan.toUpperCase() as 'STARTER' | 'SHOP' | 'PRO' | 'WHOLESALE'
 
       const periodEnd = new Date()
       periodEnd.setMonth(periodEnd.getMonth() + 1)
@@ -72,6 +109,10 @@ export async function razorpayRoutes(fastify: FastifyInstance): Promise<void> {
         },
       })
 
+      // Add monthly credits
+      const monthlyCredits = await getPlanCredits(fastify.redis, planKey)
+      await addCredits(user.id, monthlyCredits)
+
       // Send WhatsApp confirmation
       setImmediate(async () => {
         try {
@@ -81,6 +122,7 @@ export async function razorpayRoutes(fastify: FastifyInstance): Promise<void> {
               `🎉 *Payment Successful!*`,
               ``,
               `Your *${PLAN_LABEL[planKey] ?? planKey} Plan* is now active.`,
+              `✅ *${monthlyCredits} credits* have been added to your account.`,
               ``,
               `✅ Valid until: ${periodEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`,
               ``,

@@ -36,7 +36,7 @@ import {
   handleLedgerPayAmount,
   handleLedgerViewName,
 } from '../handlers/ledger.handler.js'
-import { handleUpgradeSelect } from '../handlers/upgrade.handler.js'
+import { handleUpgradeSelect, handleCreditPackSelect } from '../handlers/upgrade.handler.js'
 import {
   handleBizName,
   handleBizGstin,
@@ -201,6 +201,9 @@ async function dispatchMessage(
 
     case STATES.UPGRADE_SELECT:
       return handleUpgradeSelect(message, phone, fastify)
+
+    case STATES.CREDIT_PACK_SELECT:
+      return handleCreditPackSelect(message, phone, fastify)
 
     case STATES.BIZ_NAME:
       return handleBizName(message, phone, fastify)

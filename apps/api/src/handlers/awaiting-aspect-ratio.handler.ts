@@ -3,6 +3,7 @@ import type { MetaInteractiveMessage } from '../whatsapp/wa.types.js'
 import { sendButtons, sendText } from '../whatsapp/wa.messages.js'
 import { getSession, transitionState, resetSession } from '../session/session.service.js'
 import { getTemplateById } from '../features/image-generation/templates.service.js'
+import { CREDIT_COST_PHOTO } from '../config/constants.js'
 
 export async function handleAwaitingAspectRatio(
   message: MetaInteractiveMessage,
@@ -47,7 +48,7 @@ export async function handleAwaitingAspectRatio(
 
   await sendButtons(
     phone,
-    `*${template.name}*\n_${template.category}_\nAspect ratio: *${ratioLabel}*\n\nReady to generate your professional photo?`,
+    `*${template.name}*\n_${template.category}_\nAspect ratio: *${ratioLabel}*\n💳 Cost: *${CREDIT_COST_PHOTO} credits*\n\nReady to generate your professional photo?`,
     [
       { type: 'reply', reply: { id: `confirm_generate:${templateId}`, title: '✅ Yes, Generate!' } },
       { type: 'reply', reply: { id: 'choose_different', title: '🔄 Different Style' } },

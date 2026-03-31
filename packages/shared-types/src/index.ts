@@ -26,6 +26,7 @@ export type SessionState =
   | 'LEDGER_PAY_AMOUNT'
   | 'LEDGER_VIEW_NAME'
   | 'UPGRADE_SELECT'
+  | 'CREDIT_PACK_SELECT'
   | 'BIZ_NAME'
   | 'BIZ_GSTIN'
   | 'BIZ_ADDRESS'
@@ -119,19 +120,41 @@ export interface JewelryAnalysis {
 export type PlanId = 'FREE' | 'STARTER' | 'SHOP' | 'PRO' | 'WHOLESALE'
 
 export const PLAN_CREDITS: Record<PlanId, number> = {
-  FREE: 5,        // lifetime
-  STARTER: 15,    // per month
-  SHOP: 75,       // per month
-  PRO: 200,       // per month
-  WHOLESALE: 700, // per month
+  FREE: 25,        // lifetime demo
+  STARTER: 50,     // per month
+  SHOP: 200,       // per month
+  PRO: 500,        // per month
+  WHOLESALE: 1400, // per month
 }
 
 export const PLAN_PRICES_INR: Record<Exclude<PlanId, 'FREE'>, number> = {
-  STARTER: 299,
-  SHOP: 899,
-  PRO: 1799,
-  WHOLESALE: 4299,
+  STARTER: 149,
+  SHOP: 499,
+  PRO: 999,
+  WHOLESALE: 1999,
 }
+
+// ─── Credit Costs ────────────────────────────────────────────────────────────
+
+export const CREDIT_COST_PHOTO = 5
+
+// ─── Credit Packs (one-time purchase) ────────────────────────────────────────
+
+export type CreditPackId = 'pack_100' | 'pack_250' | 'pack_500' | 'pack_1000' | 'pack_2500'
+
+export interface CreditPack {
+  id: CreditPackId
+  credits: number
+  priceInr: number
+}
+
+export const CREDIT_PACKS: CreditPack[] = [
+  { id: 'pack_100',  credits: 100,  priceInr: 199 },
+  { id: 'pack_250',  credits: 250,  priceInr: 449 },
+  { id: 'pack_500',  credits: 500,  priceInr: 799 },
+  { id: 'pack_1000', credits: 1000, priceInr: 1399 },
+  { id: 'pack_2500', credits: 2500, priceInr: 2999 },
+]
 
 // ─── Image Gen Job Payload ────────────────────────────────────────────────────
 

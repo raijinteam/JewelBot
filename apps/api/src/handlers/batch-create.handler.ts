@@ -11,6 +11,7 @@ import { getCompatibleTemplates, getTemplateById } from '../features/image-gener
 import { enqueueImageGenJob } from '../features/image-generation/image-gen.queue.js'
 import { prisma } from '@jewel/database'
 import { logger } from '../shared/logger.js'
+import { CREDIT_COST_PHOTO } from '../config/constants.js'
 import type { Template } from '@jewel/database'
 
 const MAX_BATCH_SIZE = 10
@@ -23,10 +24,10 @@ export async function startBatchCreate(
 ): Promise<void> {
   const user = await findOrCreateUser(phone)
 
-  if (!(await hasCredits(user.id))) {
+  if (!(await hasCredits(user.id, CREDIT_COST_PHOTO))) {
     await sendText(
       phone,
-      "You're out of credits 😔\n\nUpgrade to continue generating professional product photos.\n\nReply *UPGRADE* to see our plans.",
+      `You need at least *${CREDIT_COST_PHOTO} credits* per photo but you don't have enough 😔\n\nType *menu* and tap *⬆️ Upgrade Plan* or *🛒 Buy Credits* to continue.`,
     )
     return
   }
@@ -169,10 +170,11 @@ async function finishCollecting(phone: string, fastify: FastifyInstance): Promis
   const user = await findOrCreateUser(phone)
   const balance = await getCreditBalance(user.id)
 
-  if (balance < images.length) {
+  const creditsNeeded = images.length * CREDIT_COST_PHOTO
+  if (balance < creditsNeeded) {
     await sendText(
       phone,
-      `⚠️ You need *${images.length} credits* but only have *${balance}*.\n\nRemove some photos or upgrade your plan.`,
+      `⚠️ You need *${creditsNeeded} credits* (${images.length} photos × ${CREDIT_COST_PHOTO} credits each) but only have *${balance}*.\n\nRemove some photos or upgrade your plan.`,
     )
     await resetSession(fastify.redis, phone)
     return
@@ -214,7 +216,7 @@ async function sendBatchTemplateList(phone: string, imageCount: number, template
 
   await sendList(
     phone,
-    `📸 *${imageCount} images* ready!\n\nChoose a template to apply to *all* photos:`,
+    `📸 *${imageCount} images* ready!\n💳 *${imageCount * CREDIT_COST_PHOTO} credits* will be used (${CREDIT_COST_PHOTO}/photo)\n\nChoose a template to apply to *all* photos:`,
     'Select Template',
     sections,
     '🎨 Choose Style for Batch',
@@ -287,7 +289,7 @@ export async function handleBatchAspectRatio(
 
   await sendButtons(
     phone,
-    `📸 *Batch Summary*\n\n🖼️ Images: *${images.length}*\n🎨 Template: *${templateName}*\n📐 Ratio: *${ratioLabel}*\n💳 Credits used: *${images.length}*\n\nReady to generate all photos?`,
+    `📸 *Batch Summary*\n\n🖼️ Images: *${images.length}*\n🎨 Template: *${templateName}*\n📐 Ratio: *${ratioLabel}*\n💳 Credits: *${images.length * CREDIT_COST_PHOTO}* (${images.length} × ${CREDIT_COST_PHOTO})\n\nReady to generate all photos?`,
     [
       { type: 'reply', reply: { id: 'batch_generate', title: '✅ Generate All!' } },
       { type: 'reply', reply: { id: 'batch_cancel', title: '❌ Cancel' } },
@@ -333,8 +335,9 @@ export async function handleBatchConfirm(
   const user = await findOrCreateUser(phone)
   const balance = await getCreditBalance(user.id)
 
-  if (balance < images.length) {
-    await sendText(phone, `⚠️ Not enough credits. You need ${images.length} but have ${balance}.`)
+  const totalCreditsNeeded = images.length * CREDIT_COST_PHOTO
+  if (balance < totalCreditsNeeded) {
+    await sendText(phone, `⚠️ Not enough credits. You need *${totalCreditsNeeded}* but have *${balance}*.`)
     await resetSession(fastify.redis, phone)
     return
   }
@@ -343,7 +346,7 @@ export async function handleBatchConfirm(
 
   await sendText(
     phone,
-    `⏳ *Generating ${images.length} photos!*\n\nThis may take a few minutes. I'll send each photo as it's ready.`,
+    `⏳ *Generating ${images.length} photos!*\n💳 *${images.length * CREDIT_COST_PHOTO} credits* will be deducted.\n\nThis may take a few minutes. I'll send each photo as it's ready.`,
   )
 
   // Enqueue all jobs

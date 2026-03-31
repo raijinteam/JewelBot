@@ -13,7 +13,7 @@ import { startFestivePost } from './festive-post.handler.js'
 import { startBatchCreate } from './batch-create.handler.js'
 
 const WELCOME_NEW = (name: string) =>
-  `Welcome to *JewelAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *5 free photo generations* to start.`
+  `Welcome to *JewelAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *25 free credits* to start (5 credits per photo).`
 
 const WELCOME_BACK = (credits: number) =>
   `Welcome back! 👋\n\nYou have *${credits} credit${credits === 1 ? '' : 's'}* remaining.\n\nWhat would you like to do?`
@@ -52,9 +52,8 @@ async function showWelcome(
         title: 'Account',
         rows: [
           { id: 'view_credits', title: '💳 My Credits', description: 'Check your remaining credits' },
-          { id: 'upgrade', title: '⬆️ Upgrade Plan', description: 'Get more credits & features' },
+          { id: 'upgrade', title: '⬆️ Plans & Credits', description: 'Subscribe or buy credit packs' },
           { id: 'my_business', title: '⚙️ My Business', description: 'View & edit business profile' },
-          { id: 'help', title: '❓ Help', description: 'How to use JewelAI' },
         ],
       },
     ],
@@ -65,7 +64,7 @@ async function showWelcome(
 }
 
 const UPGRADE_MSG =
-  `🔒 *Subscription Required*\n\nThis feature is available on paid plans (Starter and above).\n\nTap the menu and select *⬆️ Upgrade Plan* to subscribe starting at just ₹299/mo.`
+  `🔒 *Subscription Required*\n\nThis feature is available on paid plans (Starter and above).\n\nTap the menu and select *⬆️ Upgrade Plan* to subscribe starting at just ₹149/mo.`
 
 export async function handleIdleInteractive(
   replyId: string,
@@ -106,7 +105,7 @@ export async function handleIdleInteractive(
     const balance = await getCreditBalance(user.id)
     await sendText(
       phone,
-      `💳 *Your Credits*\n\nYou have *${balance} credit${balance === 1 ? '' : 's'}* remaining.\n\nEach photo generation uses 1 credit.`,
+      `💳 *Your Credits*\n\nYou have *${balance} credit${balance === 1 ? '' : 's'}* remaining.\n\nEach photo generation uses *5 credits*.`,
     )
     return
   }
@@ -128,13 +127,6 @@ export async function handleIdleInteractive(
   }
   if (replyId === 'festive_post') {
     await startFestivePost(phone, fastify)
-    return
-  }
-  if (replyId === 'help') {
-    await sendText(
-      phone,
-      `❓ *How JewelAI works*\n\n1️⃣ Tap *Create Photo* and send a jewelry image\n2️⃣ Choose a background style\n3️⃣ Confirm and receive your professional photo\n\n💰 *Live Rates*\nGet live gold/silver prices instantly.\n\n📋 *Billing Calculator*\nGenerate itemized bill estimates with live rates.\n\n📄 *GST Invoice*\nCreate a full tax invoice with CGST/SGST breakdown.\n\nNeed help? Contact us at support@jewel.ai`,
-    )
     return
   }
   await showWelcome(phone, undefined, fastify)

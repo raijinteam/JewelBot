@@ -10,6 +10,7 @@ import { deductCredit } from '../../billing/credits.service.js'
 import { resetSession } from '../../session/session.service.js'
 import { logger } from '../../shared/logger.js'
 import type { ImageGenJobPayload } from '@jewel/shared-types'
+import { CREDIT_COST_PHOTO } from '../../config/constants.js'
 
 const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null })
 
@@ -61,10 +62,10 @@ export function startImageGenWorker() {
         // Reset session so user isn't stuck in PROCESSING
         await resetSession(redis, userPhone)
 
-        // Notify user — credit NOT deducted on failure
+        // Notify user — credits NOT deducted on failure
         await sendButtons(
           userPhone,
-          'Something went wrong generating your image. Your credit has NOT been deducted.\n\nWould you like to try again?',
+          'Something went wrong generating your image. Your credits have NOT been deducted.\n\nWould you like to try again?',
           [
             { type: 'reply', reply: { id: 'start_photo', title: '📸 Try Again' } },
             { type: 'reply', reply: { id: 'cancel', title: '❌ Cancel' } },
@@ -73,9 +74,9 @@ export function startImageGenWorker() {
         return
       }
 
-      // Deduct credit atomically
+      // Deduct credits atomically
       try {
-        await deductCredit(userId)
+        await deductCredit(userId, CREDIT_COST_PHOTO)
       } catch {
         // Credit deduction failed — still deliver the image but log it
         logger.error({ userId, jobId }, 'Credit deduction failed after successful generation')
@@ -88,7 +89,7 @@ export function startImageGenWorker() {
           status: 'DONE',
           resultImageUrl: resultUrl,
           completedAt: new Date(),
-          creditsUsed: 1,
+          creditsUsed: CREDIT_COST_PHOTO,
         },
       })
 

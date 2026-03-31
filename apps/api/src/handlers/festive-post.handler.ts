@@ -11,6 +11,7 @@ import { findOrCreateUser } from '../users/user.service.js'
 import { deductCredit } from '../billing/credits.service.js'
 import { logger } from '../shared/logger.js'
 import { randomUUID } from 'node:crypto'
+import { CREDIT_COST_PHOTO } from '../config/constants.js'
 
 // ─── Entry point: check branding and start flow ──────────────────────────────
 
@@ -182,7 +183,7 @@ export async function handleFestiveConfirm(
     const session = await getSession(fastify.redis, phone)
     await sendText(
       phone,
-      '🎉 *Which festival or occasion* do you want to create a post for?\n\nExamples: Diwali, Eid, Christmas, Raksha Bandhan, Navratri, New Year, Akshaya Tritiya...\n\nType the festival name:',
+      `🎉 *Which festival or occasion* do you want to create a post for?\n\n💳 Cost: *${CREDIT_COST_PHOTO} credits*\n\nExamples: Diwali, Eid, Christmas, Raksha Bandhan, Navratri, New Year, Akshaya Tritiya...\n\nType the festival name:`,
     )
     await setSession(fastify.redis, phone, 'FESTIVE_FESTIVAL_INPUT', session?.data ?? {})
     return

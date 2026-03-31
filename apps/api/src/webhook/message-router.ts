@@ -104,10 +104,11 @@ async function dispatchMessage(
     return
   }
 
-  // Global cancel/menu command — works from any state
+  // Global cancel/menu command — works from any state except when processing images
+  const processingStates: string[] = [STATES.PROCESSING, STATES.BATCH_PROCESSING, STATES.FESTIVE_PROCESSING]
   if (message.type === 'text') {
     const text = (message as MetaTextMessage).text.body.trim().toLowerCase()
-    if (['menu', 'cancel', 'exit', 'home', 'hi', 'hello', 'start'].includes(text) && state !== STATES.IDLE) {
+    if (['menu', 'cancel', 'exit', 'home', 'hi', 'hello', 'start', 'reset'].includes(text) && state !== STATES.IDLE && !processingStates.includes(state)) {
       return handleIdle(message, phone, contactName, fastify)
     }
   }

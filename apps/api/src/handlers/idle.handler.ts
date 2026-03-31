@@ -3,12 +3,13 @@ import type { MetaMessage } from '../whatsapp/wa.types.js'
 import { sendList, sendText } from '../whatsapp/wa.messages.js'
 import { setSession } from '../session/session.service.js'
 import { findOrCreateUser } from '../users/user.service.js'
-import { getCreditBalance } from '../billing/credits.service.js'
+import { getCreditBalance, hasPaidPlan } from '../billing/credits.service.js'
 import { showLiveRates } from './price-calc.handler.js'
 import { startBillingCalc } from './billing-calc.handler.js'
 import { showLedgerMenu } from './ledger.handler.js'
 import { showUpgradeMenu } from './upgrade.handler.js'
 import { showBizProfile } from './business-profile.handler.js'
+import { startFestivePost } from './festive-post.handler.js'
 
 const WELCOME_NEW = (name: string) =>
   `Welcome to *JewelAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *5 free photo generations* to start.`
@@ -41,6 +42,7 @@ async function showWelcome(
           { id: 'price_calc', title: '💰 Live Rates', description: 'Live gold & silver prices' },
           { id: 'billing_calc', title: '📋 Billing Calculator', description: 'Generate itemized bill estimate' },
           { id: 'gen_invoice', title: '📄 GST Invoice', description: 'Create a tax invoice with GST' },
+          { id: 'festive_post', title: '🎉 Festive Posts', description: 'Create branded festival greetings' },
           { id: 'ledger', title: '📒 Udhaar Book', description: 'Track customer credit & dues' },
         ],
       },
@@ -60,11 +62,26 @@ async function showWelcome(
   await setSession(fastify.redis, phone, 'IDLE', {})
 }
 
+const UPGRADE_MSG =
+  `🔒 *Subscription Required*\n\nThis feature is available on paid plans (Starter and above).\n\nTap the menu and select *⬆️ Upgrade Plan* to subscribe starting at just ₹299/mo.`
+
 export async function handleIdleInteractive(
   replyId: string,
   phone: string,
   fastify: FastifyInstance,
 ): Promise<void> {
+  // Features that require a paid plan
+  const paidFeatures = ['price_calc', 'billing_calc', 'gen_invoice', 'ledger', 'my_business', 'festive_post']
+
+  if (paidFeatures.includes(replyId)) {
+    const user = await findOrCreateUser(phone)
+    const paid = await hasPaidPlan(user.id)
+    if (!paid) {
+      await sendText(phone, UPGRADE_MSG)
+      return
+    }
+  }
+
   if (replyId === 'start_photo') {
     await setSession(fastify.redis, phone, 'AWAITING_IMAGE', {})
     await sendText(phone, '📸 Please send me a clear photo of the jewelry you want to enhance.')
@@ -101,6 +118,10 @@ export async function handleIdleInteractive(
   }
   if (replyId === 'my_business') {
     await showBizProfile(phone, fastify)
+    return
+  }
+  if (replyId === 'festive_post') {
+    await startFestivePost(phone, fastify)
     return
   }
   if (replyId === 'help') {

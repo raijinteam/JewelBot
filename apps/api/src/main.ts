@@ -13,6 +13,7 @@ import { razorpayRoutes } from './webhook/razorpay.router.js'
 
 // Workers
 import { startImageGenWorker } from './features/image-generation/image-gen.worker.js'
+import { startFestivePostWorker } from './features/festive-post/festive-post.worker.js'
 
 async function bootstrap() {
   const fastify = Fastify({
@@ -46,8 +47,9 @@ async function bootstrap() {
   // Health check
   fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
 
-  // ── Start BullMQ worker ──────────────────────────────────────────────────
+  // ── Start BullMQ workers ─────────────────────────────────────────────────
   const worker = startImageGenWorker()
+  const festiveWorker = startFestivePostWorker()
 
   // ── Start server ─────────────────────────────────────────────────────────
   try {
@@ -56,6 +58,7 @@ async function bootstrap() {
   } catch (err) {
     logger.fatal({ err }, 'Failed to start server')
     await worker.close()
+    await festiveWorker.close()
     process.exit(1)
   }
 
@@ -63,6 +66,7 @@ async function bootstrap() {
   const shutdown = async () => {
     logger.info('Shutting down...')
     await worker.close()
+    await festiveWorker.close()
     await fastify.close()
     process.exit(0)
   }

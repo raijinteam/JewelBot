@@ -1,0 +1,122 @@
+import { Worker } from 'bullmq'
+import Redis from 'ioredis'
+import { prisma } from '@jewel/database'
+import { env } from '../../config/env.js'
+import { QUEUES } from '../../config/constants.js'
+import { submitKieJob, pollKieJob } from '../image-generation/kie-ai.client.js'
+import { uploadFromUrl } from '../../storage/cloudinary.service.js'
+import { sendImage, sendButtons } from '../../whatsapp/wa.messages.js'
+import { deductCredit } from '../../billing/credits.service.js'
+import { resetSession } from '../../session/session.service.js'
+import { logger } from '../../shared/logger.js'
+import type { FestivePostJobPayload } from '@jewel/shared-types'
+
+const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null })
+
+export function startFestivePostWorker() {
+  const worker = new Worker<FestivePostJobPayload>(
+    QUEUES.FESTIVE_POST,
+    async (job) => {
+      const { jobId, userId, userPhone, logoUrl, brandName, brandPhone, festivalName, prompt } = job.data
+
+      logger.info({ jobId, userId, festivalName }, 'Festive post job started')
+
+      await prisma.imageJob.update({
+        where: { id: jobId },
+        data: { status: 'PROCESSING', bullJobId: job.id },
+      })
+
+      let resultUrl: string
+
+      try {
+        // Submit to Kie AI — logo as the input image, prompt describes the festive post
+        const taskId = await submitKieJob({
+          imageUrl: logoUrl,
+          prompt,
+          callbackUrl: `${env.APP_URL}/webhook/kie-callback`,
+          aspectRatio: '4:5',
+          resolution: '1K',
+          outputFormat: 'jpg',
+        })
+
+        // Poll until done
+        const kieResultUrl = await pollKieJob(taskId)
+
+        // Upload to Cloudinary for permanent storage
+        resultUrl = await uploadFromUrl(kieResultUrl, `jewel/festive/${userId}`)
+      } catch (err) {
+        const errorMsg = (err as Error).message
+        logger.error({ jobId, err }, 'Festive post generation failed')
+
+        await prisma.imageJob.update({
+          where: { id: jobId },
+          data: { status: 'FAILED', errorMessage: errorMsg },
+        })
+
+        await resetSession(redis, userPhone)
+
+        await sendButtons(
+          userPhone,
+          '❌ Something went wrong generating your festive post. Your credit has NOT been deducted.\n\nWould you like to try again?',
+          [
+            { type: 'reply', reply: { id: 'festive_post', title: '🎉 Try Again' } },
+            { type: 'reply', reply: { id: 'cancel', title: '❌ Cancel' } },
+          ],
+        )
+        return
+      }
+
+      // Deduct credit
+      try {
+        await deductCredit(userId)
+      } catch {
+        logger.error({ userId, jobId }, 'Credit deduction failed after festive post generation')
+      }
+
+      // Save result
+      await prisma.imageJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'DONE',
+          resultImageUrl: resultUrl,
+          completedAt: new Date(),
+          creditsUsed: 1,
+        },
+      })
+
+      // Deliver result
+      const captionParts = [`🎉 Your *${festivalName}* festive post is ready!`]
+      const brandParts: string[] = []
+      if (brandName) brandParts.push(`🏢 ${brandName}`)
+      if (brandPhone) brandParts.push(`📞 ${brandPhone}`)
+      if (brandParts.length > 0) captionParts.push(brandParts.join(' | '))
+
+      await sendImage(userPhone, resultUrl, captionParts.join('\n\n'))
+
+      await resetSession(redis, userPhone)
+
+      await sendButtons(
+        userPhone,
+        'What would you like to do next?',
+        [
+          { type: 'reply', reply: { id: 'festive_post', title: '🎉 Another Post' } },
+          { type: 'reply', reply: { id: 'start_photo', title: '📸 Create Photo' } },
+          { type: 'reply', reply: { id: 'help', title: '❓ Help' } },
+        ],
+      )
+
+      logger.info({ jobId, userId, festivalName, resultUrl }, 'Festive post job completed')
+    },
+    {
+      connection: { url: env.REDIS_URL },
+      concurrency: 2,
+    },
+  )
+
+  worker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'Festive post BullMQ job permanently failed')
+  })
+
+  logger.info('Festive post worker started')
+  return worker
+}

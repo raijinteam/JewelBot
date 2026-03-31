@@ -50,7 +50,7 @@ export interface KieJobRequest {
   imageUrl: string
   prompt: string
   callbackUrl?: string
-  aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | 'auto'
+  aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '4:5' | '5:4' | 'auto'
   resolution?: '1K' | '2K' | '4K'
   outputFormat?: 'jpg' | 'png'
 }

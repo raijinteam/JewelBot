@@ -31,6 +31,12 @@ export type SessionState =
   | 'BIZ_ADDRESS'
   | 'BIZ_STATE'
   | 'BIZ_PHONE'
+  | 'FESTIVE_BRAND_LOGO'
+  | 'FESTIVE_BRAND_NAME'
+  | 'FESTIVE_BRAND_PHONE'
+  | 'FESTIVE_FESTIVAL_INPUT'
+  | 'FESTIVE_CONFIRM'
+  | 'FESTIVE_PROCESSING'
 
 export interface SessionData {
   sourceImageUrl?: string
@@ -70,6 +76,12 @@ export interface SessionData {
   bizSetupAddress?: string
   bizSetupState?: string
   bizSetupReturnToInvoice?: boolean  // true = go to invoice after setup
+  // Festive post
+  festiveLogoUrl?: string
+  festiveBrandName?: string
+  festiveBrandPhone?: string
+  festiveFestivalName?: string
+  festivePrompt?: string
 }
 
 // ─── Jewelry Analysis ─────────────────────────────────────────────────────────
@@ -121,4 +133,15 @@ export interface ImageGenJobPayload {
   jewellType: string
   jewellDescription: string
   aspectRatio: '1:1' | '9:16'
+}
+
+export interface FestivePostJobPayload {
+  jobId: string
+  userId: string
+  userPhone: string
+  logoUrl: string
+  brandName: string
+  brandPhone: string
+  festivalName: string
+  prompt: string
 }

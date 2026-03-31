@@ -44,6 +44,14 @@ import {
   handleBizState,
   handleBizPhone,
 } from '../handlers/business-profile.handler.js'
+import {
+  handleFestiveBrandLogo,
+  handleFestiveBrandName,
+  handleFestiveBrandPhone,
+  handleFestiveConfirm,
+  handleFestiveFestivalInput,
+  handleFestiveProcessing,
+} from '../handlers/festive-post.handler.js'
 import { normalizePhone } from '../shared/utils.js'
 import { logger } from '../shared/logger.js'
 
@@ -201,6 +209,24 @@ async function dispatchMessage(
 
     case STATES.BIZ_PHONE:
       return handleBizPhone(message, phone, fastify)
+
+    case STATES.FESTIVE_BRAND_LOGO:
+      return handleFestiveBrandLogo(message, phone, fastify)
+
+    case STATES.FESTIVE_BRAND_NAME:
+      return handleFestiveBrandName(message, phone, fastify)
+
+    case STATES.FESTIVE_BRAND_PHONE:
+      return handleFestiveBrandPhone(message, phone, fastify)
+
+    case STATES.FESTIVE_CONFIRM:
+      return handleFestiveConfirm(message, phone, fastify)
+
+    case STATES.FESTIVE_FESTIVAL_INPUT:
+      return handleFestiveFestivalInput(message, phone, fastify)
+
+    case STATES.FESTIVE_PROCESSING:
+      return handleFestiveProcessing(phone, fastify)
 
     default:
       return handleIdle(message, phone, contactName, fastify)

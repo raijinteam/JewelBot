@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { env } from '../config/env.js'
+import { logger } from '../shared/logger.js'
 
 const RAZORPAY_BASE = 'https://api.razorpay.com/v1'
 
@@ -19,28 +20,33 @@ export async function createPaymentLink(params: {
   planName: string
   description: string
 }): Promise<PaymentLinkResult> {
-  const response = await axios.post(
-    `${RAZORPAY_BASE}/payment_links`,
-    {
-      amount: params.amount * 100, // convert to paise
-      currency: 'INR',
-      description: params.description,
-      customer: {
-        contact: `+91${params.customerPhone}`,
+  try {
+    const response = await axios.post(
+      `${RAZORPAY_BASE}/payment_links`,
+      {
+        amount: params.amount * 100, // convert to paise
+        currency: 'INR',
+        description: params.description,
+        customer: {
+          contact: params.customerPhone.startsWith('91') ? `+${params.customerPhone}` : `+91${params.customerPhone}`,
+        },
+        notify: {
+          sms: true,
+          whatsapp: false,
+        },
+        reminder_enable: true,
+        notes: {
+          phone: params.customerPhone,
+          plan: params.planName,
+        },
+        callback_url: `${env.APP_URL}/razorpay/webhook`,
+        callback_method: 'get',
       },
-      notify: {
-        sms: true,
-        whatsapp: false,
-      },
-      reminder_enable: true,
-      notes: {
-        phone: params.customerPhone,
-        plan: params.planName,
-      },
-      callback_url: `${env.APP_URL}/razorpay/webhook`,
-      callback_method: 'get',
-    },
-    { headers: authHeader() },
-  )
-  return { id: response.data.id, short_url: response.data.short_url }
+      { headers: authHeader() },
+    )
+    return { id: response.data.id, short_url: response.data.short_url }
+  } catch (err: any) {
+    logger.error({ err: err.response?.data ?? err.message, phone: params.customerPhone, plan: params.planName }, 'Razorpay payment link creation failed')
+    throw err
+  }
 }

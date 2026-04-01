@@ -149,7 +149,7 @@ export interface CreditPack {
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: 'pack_100',  credits: 100,  priceInr: 30 },
+  { id: 'pack_100',  credits: 100,  priceInr: 199 },
   { id: 'pack_250',  credits: 250,  priceInr: 449 },
   { id: 'pack_500',  credits: 500,  priceInr: 799 },
   { id: 'pack_1000', credits: 1000, priceInr: 1399 },

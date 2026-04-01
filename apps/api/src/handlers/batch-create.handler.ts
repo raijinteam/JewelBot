@@ -1,12 +1,11 @@
 import type { FastifyInstance } from 'fastify'
-import type { MetaMessage, MetaImageMessage, MetaInteractiveMessage } from '../whatsapp/wa.types.js'
+import type { MetaMessage, MetaImageMessage, MetaTextMessage, MetaInteractiveMessage } from '../whatsapp/wa.types.js'
 import { sendText, sendButtons, sendList } from '../whatsapp/wa.messages.js'
 import { getSession, setSession, transitionState, resetSession } from '../session/session.service.js'
 import { downloadMediaBuffer } from '../whatsapp/wa.media.js'
 import { uploadBuffer } from '../storage/cloudinary.service.js'
 import { findOrCreateUser } from '../users/user.service.js'
 import { hasCredits, getCreditBalance } from '../billing/credits.service.js'
-import { analyzeJewelryImage } from '../features/image-generation/jewelry-analyzer.js'
 import { getCompatibleTemplates, getTemplateById } from '../features/image-generation/templates.service.js'
 import { enqueueImageGenJob } from '../features/image-generation/image-gen.queue.js'
 import { prisma } from '@jewel/database'
@@ -15,6 +14,9 @@ import { CREDIT_COST_PHOTO } from '../config/constants.js'
 import type { Template } from '@jewel/database'
 
 const MAX_BATCH_SIZE = 10
+
+// Track in-flight image processing per phone to avoid race conditions
+const processingLocks = new Map<string, Promise<void>>()
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
@@ -27,14 +29,14 @@ export async function startBatchCreate(
   if (!(await hasCredits(user.id, CREDIT_COST_PHOTO))) {
     await sendText(
       phone,
-      `You need at least *${CREDIT_COST_PHOTO} credits* per photo but you don't have enough 😔\n\nType *menu* and tap *⬆️ Upgrade Plan* or *🛒 Buy Credits* to continue.`,
+      `You need at least *${CREDIT_COST_PHOTO} credits* per photo but you don't have enough 😔\n\nType *menu* and tap *⬆️ Plans & Credits* to get more.`,
     )
     return
   }
 
   await sendText(
     phone,
-    `📸 *Batch Photo Creator*\n\nSelect up to *${MAX_BATCH_SIZE} photos* from your gallery and send them all at once.\n\nI'll analyze each one automatically. When you're done sending, tap the *✅ Done* button.`,
+    `📸 *Batch Photo Creator*\n\nSelect up to *${MAX_BATCH_SIZE} photos* from your gallery and send them all at once.\n\nWhen you're done sending, type *done* or tap the Done button.`,
   )
   await setSession(fastify.redis, phone, 'BATCH_COLLECTING', {
     batchImages: [],
@@ -58,9 +60,13 @@ export async function handleBatchCollecting(
         : ''
 
     if (replyId === 'batch_done') {
+      // Wait for any in-flight image processing to finish
+      const pending = processingLocks.get(phone)
+      if (pending) await pending
       return finishCollecting(phone, fastify)
     }
     if (replyId === 'batch_cancel') {
+      processingLocks.delete(phone)
       await resetSession(fastify.redis, phone)
       await sendText(phone, 'Batch cancelled. Send me a photo anytime to start again!')
       return
@@ -68,8 +74,15 @@ export async function handleBatchCollecting(
     return
   }
 
-  // Only accept images
-  if (message.type !== 'image') {
+  // Handle "done" as text
+  if (message.type === 'text') {
+    const text = (message as MetaTextMessage).text.body.trim().toLowerCase()
+    if (text === 'done') {
+      const pending = processingLocks.get(phone)
+      if (pending) await pending
+      return finishCollecting(phone, fastify)
+    }
+    // Any other text — show count
     const session = await getSession(fastify.redis, phone)
     const count = session?.data?.batchImages?.length ?? 0
     if (count > 0) {
@@ -87,13 +100,18 @@ export async function handleBatchCollecting(
     return
   }
 
+  // Only accept images
+  if (message.type !== 'image') {
+    return
+  }
+
   const session = await getSession(fastify.redis, phone)
   const images = session?.data?.batchImages ?? []
 
   if (images.length >= MAX_BATCH_SIZE) {
     await sendButtons(
       phone,
-      `⚠️ Maximum ${MAX_BATCH_SIZE} images reached!\n\nTap Done to proceed with these ${MAX_BATCH_SIZE} photos.`,
+      `⚠️ Maximum ${MAX_BATCH_SIZE} images reached!\n\nTap Done to proceed.`,
       [
         { type: 'reply', reply: { id: 'batch_done', title: '✅ Done' } },
       ],
@@ -103,61 +121,70 @@ export async function handleBatchCollecting(
 
   const img = message as MetaImageMessage
 
-  try {
-    // Download and upload
-    const buffer = await downloadMediaBuffer(img.image.id)
-    const user = await findOrCreateUser(phone)
-    const sourceUrl = await uploadBuffer(buffer, `jewel/source/${user.id}`)
+  // Chain image processing to avoid race conditions on session data
+  const previousLock = processingLocks.get(phone) ?? Promise.resolve()
+  const currentLock = previousLock.then(async () => {
+    try {
+      // Download and upload
+      const buffer = await downloadMediaBuffer(img.image.id)
+      const user = await findOrCreateUser(phone)
+      const sourceUrl = await uploadBuffer(buffer, `jewel/source/${user.id}`)
 
-    // Analyze with GPT-4o
-    const analysis = await analyzeJewelryImage(sourceUrl)
+      // Read fresh session (previous image may have updated it)
+      const freshSession = await getSession(fastify.redis, phone)
+      if (freshSession?.state !== 'BATCH_COLLECTING') return // user cancelled
 
-    const updatedImages = [
-      ...images,
-      { url: sourceUrl, jewellType: analysis.jewel_type, description: analysis.description },
-    ]
+      const currentImages = freshSession?.data?.batchImages ?? []
+      const updatedImages = [
+        ...currentImages,
+        { url: sourceUrl, jewellType: 'jewelry', description: '' },
+      ]
 
-    const now = Date.now()
-    await setSession(fastify.redis, phone, 'BATCH_COLLECTING', {
-      ...session?.data,
-      batchImages: updatedImages,
-      batchLastImageTime: now,
-    })
+      const now = Date.now()
+      await setSession(fastify.redis, phone, 'BATCH_COLLECTING', {
+        ...freshSession?.data,
+        batchImages: updatedImages,
+        batchLastImageTime: now,
+      })
 
-    // Debounce: wait briefly then show count + Done button
-    // Only show the button if no new image arrives within 3 seconds
-    setTimeout(async () => {
-      try {
-        const currentSession = await getSession(fastify.redis, phone)
-        if (
-          currentSession?.state === 'BATCH_COLLECTING' &&
-          currentSession?.data?.batchLastImageTime === now
-        ) {
-          const count = currentSession.data.batchImages?.length ?? 0
-          await sendButtons(
-            phone,
-            `📷 *${count} image${count === 1 ? '' : 's'}* received and analyzed!\n\nSend more photos or tap Done to choose a template.`,
-            [
-              { type: 'reply', reply: { id: 'batch_done', title: '✅ Done' } },
-              { type: 'reply', reply: { id: 'batch_cancel', title: '❌ Cancel' } },
-            ],
-          )
+      logger.info({ phone, count: updatedImages.length }, 'Batch image added')
+
+      // Debounce: only show count if no new image arrives within 3 seconds
+      setTimeout(async () => {
+        try {
+          const currentSession = await getSession(fastify.redis, phone)
+          if (
+            currentSession?.state === 'BATCH_COLLECTING' &&
+            currentSession?.data?.batchLastImageTime === now
+          ) {
+            const count = currentSession.data.batchImages?.length ?? 0
+            await sendButtons(
+              phone,
+              `📷 *${count} image${count === 1 ? '' : 's'}* received!\n\nSend more photos, or type *done* / tap Done.`,
+              [
+                { type: 'reply', reply: { id: 'batch_done', title: '✅ Done' } },
+                { type: 'reply', reply: { id: 'batch_cancel', title: '❌ Cancel' } },
+              ],
+            )
+          }
+        } catch {
+          // Ignore debounce errors
         }
-      } catch {
-        // Ignore debounce errors
-      }
-    }, 3000)
+      }, 3000)
+    } catch (err) {
+      logger.error({ err, phone }, 'Failed to process batch image')
+      await sendText(phone, '⚠️ Failed to process that image. Try sending it again.')
+    }
+  })
 
-    logger.info({ phone, count: updatedImages.length, type: analysis.jewel_type }, 'Batch image added')
-  } catch (err) {
-    logger.error({ err, phone }, 'Failed to process batch image')
-    await sendText(phone, '⚠️ Failed to process that image. Try sending it again.')
-  }
+  processingLocks.set(phone, currentLock)
 }
 
 // ─── Finish collecting → show template list ──────────────────────────────────
 
 async function finishCollecting(phone: string, fastify: FastifyInstance): Promise<void> {
+  processingLocks.delete(phone)
+
   const session = await getSession(fastify.redis, phone)
   const images = session?.data?.batchImages ?? []
 
@@ -180,7 +207,7 @@ async function finishCollecting(phone: string, fastify: FastifyInstance): Promis
     return
   }
 
-  // Get templates compatible with the most common jewel type
+  // Get all templates (use wildcard since batch applies same template to all)
   const subscription = await fastify.prisma.subscription.findUnique({ where: { userId: user.id } })
   const templates = await getCompatibleTemplates('*', subscription?.plan ?? 'FREE')
 

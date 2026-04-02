@@ -96,6 +96,77 @@ const LANDING_HTML = `<!DOCTYPE html>
 </body>
 </html>`
 
+const PRIVACY_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — JewelAI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; color: #333; line-height: 1.7; }
+    .container { max-width: 720px; margin: 0 auto; padding: 48px 24px; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .updated { font-size: 14px; color: #888; margin-bottom: 32px; }
+    h2 { font-size: 20px; margin-top: 28px; margin-bottom: 8px; }
+    p, li { font-size: 15px; margin-bottom: 12px; }
+    ul { padding-left: 24px; }
+    a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: April 1, 2026</p>
+
+    <p><strong>JewelAI</strong> ("we", "our", "us") operates a WhatsApp-based AI photography service for jewelry businesses. This policy explains how we collect, use, and protect your information.</p>
+
+    <h2>1. Information We Collect</h2>
+    <ul>
+      <li><strong>Phone number</strong> — provided when you message us on WhatsApp.</li>
+      <li><strong>Name</strong> — from your WhatsApp profile (optional).</li>
+      <li><strong>Images</strong> — jewelry photos you send for processing.</li>
+      <li><strong>Business details</strong> — company name, logo, phone, GSTIN (only if you provide them for branding features).</li>
+      <li><strong>Payment information</strong> — processed securely by Razorpay. We do not store card numbers or UPI IDs.</li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+    <ul>
+      <li>To generate AI-enhanced product photos and festive posts as requested.</li>
+      <li>To manage your credits, subscription, and billing.</li>
+      <li>To send you results and service messages via WhatsApp.</li>
+      <li>To improve our service quality.</li>
+    </ul>
+
+    <h2>3. Data Storage & Security</h2>
+    <p>Your images are stored on Cloudinary (cloud CDN). Account data is stored in a secured PostgreSQL database. All communication happens over HTTPS. We implement industry-standard security measures to protect your data.</p>
+
+    <h2>4. Third-Party Services</h2>
+    <ul>
+      <li><strong>Meta (WhatsApp Cloud API)</strong> — for messaging.</li>
+      <li><strong>OpenAI</strong> — for image analysis.</li>
+      <li><strong>Kie AI</strong> — for image generation.</li>
+      <li><strong>Cloudinary</strong> — for image storage and delivery.</li>
+      <li><strong>Razorpay</strong> — for payment processing.</li>
+    </ul>
+    <p>Each service has its own privacy policy. We only share the minimum data required for each service to function.</p>
+
+    <h2>5. Data Retention</h2>
+    <p>We retain your account data and generated images as long as your account is active. You may request deletion of your data at any time by contacting us.</p>
+
+    <h2>6. Your Rights</h2>
+    <ul>
+      <li>Request access to your personal data.</li>
+      <li>Request deletion of your data and account.</li>
+      <li>Opt out of the service at any time by simply stopping messaging.</li>
+    </ul>
+
+    <h2>7. Contact Us</h2>
+    <p>For privacy-related questions, contact us at <a href="mailto:rominv13@gmail.com">rominv13@gmail.com</a></p>
+  </div>
+</body>
+</html>`
+
 async function bootstrap() {
   const fastify = Fastify({
     logger: false, // Using our own pino instance
@@ -131,6 +202,11 @@ async function bootstrap() {
   // Landing page for Razorpay verification & visitors
   fastify.get('/', async (_req, reply) => {
     reply.type('text/html').send(LANDING_HTML)
+  })
+
+  // Privacy policy for Meta app review
+  fastify.get('/privacy', async (_req, reply) => {
+    reply.type('text/html').send(PRIVACY_HTML)
   })
 
   // ── Start BullMQ workers ─────────────────────────────────────────────────

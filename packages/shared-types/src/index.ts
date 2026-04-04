@@ -44,6 +44,7 @@ export type SessionState =
   | 'FESTIVE_CONFIRM'
   | 'FESTIVE_PROCESSING'
   | 'AWAITING_JEWEL_TYPE'
+  | 'BATCH_JEWEL_TYPE'
 
 export interface SessionData {
   sourceImageUrl?: string

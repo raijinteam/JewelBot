@@ -18,6 +18,15 @@ const MAX_BATCH_SIZE = 10
 // Track in-flight image processing per phone to avoid race conditions
 const processingLocks = new Map<string, Promise<void>>()
 
+const BATCH_JEWEL_TYPE_MAP: Record<string, { type: string; label: string }> = {
+  bjtype_set: { type: 'jewelry_set', label: 'Jewelry Set' },
+  bjtype_ring: { type: 'ring', label: 'Ring' },
+  bjtype_necklace: { type: 'necklace', label: 'Necklace / Pendant' },
+  bjtype_earrings: { type: 'earrings', label: 'Earrings' },
+  bjtype_bracelet: { type: 'bracelet', label: 'Bracelet' },
+  bjtype_bangle: { type: 'bangle', label: 'Bangle / Kada' },
+}
+
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
 export async function startBatchCreate(
@@ -34,14 +43,65 @@ export async function startBatchCreate(
     return
   }
 
-  await sendText(
+  await setSession(fastify.redis, phone, 'BATCH_JEWEL_TYPE', {})
+
+  await sendList(
     phone,
-    `📸 *Batch Photo Creator*\n\nSelect up to *${MAX_BATCH_SIZE} photos* from your gallery and send them all at once.\n\nWhen you're done sending, type *done* or tap the Done button.`,
+    '📸 *Batch Photo Creator*\n\nWhat type of jewelry are you uploading?\n\n_All photos in this batch should be the same type._',
+    '💍 Select Type',
+    [
+      {
+        title: 'Jewelry Type',
+        rows: [
+          { id: 'bjtype_set', title: '💎 Jewelry Set', description: 'Necklace + Earring combo' },
+          { id: 'bjtype_ring', title: '💍 Ring', description: 'Finger rings' },
+          { id: 'bjtype_necklace', title: '📿 Necklace / Pendant', description: 'Necklaces, pendants, chains' },
+          { id: 'bjtype_earrings', title: '✨ Earrings', description: 'Studs, drops, jhumkas' },
+          { id: 'bjtype_bracelet', title: '⌚ Bracelet', description: 'Chain bracelets, charm bracelets' },
+          { id: 'bjtype_bangle', title: '⭕ Bangle / Kada', description: 'Bangles, kadas' },
+        ],
+      },
+    ],
+    '💍 Choose Jewelry Type',
   )
+}
+
+// ─── Jewelry type selection ─────────────────────────────────────────────────
+
+export async function handleBatchJewelType(
+  message: MetaMessage,
+  phone: string,
+  fastify: FastifyInstance,
+): Promise<void> {
+  if (message.type !== 'interactive') {
+    await startBatchCreate(phone, fastify)
+    return
+  }
+
+  const interactive = (message as MetaInteractiveMessage).interactive
+  const replyId =
+    interactive?.type === 'list_reply'
+      ? interactive.list_reply.id
+      : interactive?.type === 'button_reply'
+        ? interactive.button_reply.id
+        : ''
+
+  const selected = BATCH_JEWEL_TYPE_MAP[replyId]
+  if (!selected) {
+    await startBatchCreate(phone, fastify)
+    return
+  }
+
   await setSession(fastify.redis, phone, 'BATCH_COLLECTING', {
+    jewellType: selected.type,
     batchImages: [],
     batchLastImageTime: Date.now(),
   })
+
+  await sendText(
+    phone,
+    `📸 *${selected.label}* selected!\n\nNow send up to *${MAX_BATCH_SIZE} photos* from your gallery.\n\nWhen you're done sending, type *done* or tap the Done button.`,
+  )
 }
 
 // ─── Collecting images ───────────────────────────────────────────────────────
@@ -207,9 +267,11 @@ async function finishCollecting(phone: string, fastify: FastifyInstance): Promis
     return
   }
 
-  // Get all templates (use wildcard since batch applies same template to all)
+  // Get templates filtered by the jewelry type selected at start
+  const session2 = await getSession(fastify.redis, phone)
+  const jewellType = session2?.data?.jewellType ?? 'other'
   const subscription = await fastify.prisma.subscription.findUnique({ where: { userId: user.id } })
-  const templates = await getCompatibleTemplates('*', subscription?.plan ?? 'FREE')
+  const templates = await getCompatibleTemplates(jewellType, subscription?.plan ?? 'FREE')
 
   if (!templates.length) {
     await sendText(phone, 'No templates available. Please contact support.')

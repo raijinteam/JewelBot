@@ -54,6 +54,7 @@ import {
 } from '../handlers/festive-post.handler.js'
 import { handleAwaitingJewelType } from '../handlers/awaiting-jewel-type.handler.js'
 import {
+  handleBatchJewelType,
   handleBatchCollecting,
   handleBatchTemplate,
   handleBatchAspectRatio,
@@ -239,6 +240,9 @@ async function dispatchMessage(
 
     case STATES.FESTIVE_PROCESSING:
       return handleFestiveProcessing(phone, fastify)
+
+    case STATES.BATCH_JEWEL_TYPE:
+      return handleBatchJewelType(message, phone, fastify)
 
     case STATES.BATCH_COLLECTING:
       return handleBatchCollecting(message, phone, fastify)

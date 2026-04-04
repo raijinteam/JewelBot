@@ -93,25 +93,11 @@ export function startImageGenWorker() {
         },
       })
 
-      // Deliver result to user
-      await sendImage(
-        userPhone,
-        resultUrl,
-        `✨ Your *${template.name}* photo is ready!`,
-      )
+      // Deliver result to user — image only, no caption, so it can be forwarded directly
+      await sendImage(userPhone, resultUrl)
 
       // Reset session so user can start fresh
       await resetSession(redis, userPhone)
-
-      await sendButtons(
-        userPhone,
-        'What would you like to do next?',
-        [
-          { type: 'reply', reply: { id: 'start_photo', title: '📸 Create Photo' } },
-          { type: 'reply', reply: { id: 'view_credits', title: '💳 My Credits' } },
-          { type: 'reply', reply: { id: 'help', title: '❓ Help' } },
-        ],
-      )
 
       logger.info({ jobId, userId, resultUrl }, 'Image gen job completed')
     },

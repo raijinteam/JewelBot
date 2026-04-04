@@ -14,12 +14,7 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
     return
   }
 
-  const [starterPrice, shopPrice, proPrice, wholesalePrice] = await Promise.all([
-    getPlanPrice(fastify.redis, 'starter'),
-    getPlanPrice(fastify.redis, 'shop'),
-    getPlanPrice(fastify.redis, 'pro'),
-    getPlanPrice(fastify.redis, 'wholesale'),
-  ])
+  const starterPrice = await getPlanPrice(fastify.redis, 'starter')
 
   await setSession(fastify.redis, phone, 'UPGRADE_SELECT', {})
 
@@ -29,12 +24,9 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
     '💳 Select Option',
     [
       {
-        title: 'Monthly Plans',
+        title: 'Monthly Plan',
         rows: [
-          { id: 'upgrade_starter', title: `Starter — ₹${starterPrice}/mo`, description: '50 credits/month' },
-          { id: 'upgrade_shop', title: `Shop — ₹${shopPrice}/mo`, description: '200 credits/month' },
-          { id: 'upgrade_pro', title: `Pro — ₹${proPrice}/mo`, description: '500 credits/month' },
-          { id: 'upgrade_wholesale', title: `Wholesale — ₹${wholesalePrice}/mo`, description: '1400 credits/month' },
+          { id: 'upgrade_starter', title: `Starter — ₹${starterPrice}/mo`, description: '50 credits/month + all features' },
         ],
       },
       {
@@ -78,7 +70,7 @@ export async function handleUpgradeSelect(
         amount: pack.priceInr,
         customerPhone: phone,
         planName: `CREDIT_PACK_${pack.credits}`,
-        description: `JewelAI ${pack.credits} Credits Pack — ₹${pack.priceInr}`,
+        description: `SvaraAI ${pack.credits} Credits Pack — ₹${pack.priceInr}`,
       })
 
       await sendText(
@@ -103,9 +95,6 @@ export async function handleUpgradeSelect(
 
   const planMap: Record<string, { plan: string; label: string }> = {
     upgrade_starter: { plan: 'STARTER', label: 'Starter' },
-    upgrade_shop: { plan: 'SHOP', label: 'Shop' },
-    upgrade_pro: { plan: 'PRO', label: 'Pro' },
-    upgrade_wholesale: { plan: 'WHOLESALE', label: 'Wholesale' },
   }
 
   const selected = planMap[replyId]
@@ -123,7 +112,7 @@ export async function handleUpgradeSelect(
       amount: price,
       customerPhone: phone,
       planName: selected.plan,
-      description: `JewelAI ${selected.label} Plan — ₹${price}/month`,
+      description: `SvaraAI ${selected.label} Plan — ₹${price}/month`,
     })
 
     await sendText(

@@ -85,26 +85,10 @@ export function startFestivePostWorker() {
         },
       })
 
-      // Deliver result
-      const captionParts = [`🎉 Your *${festivalName}* festive post is ready!`]
-      const brandParts: string[] = []
-      if (brandName) brandParts.push(`🏢 ${brandName}`)
-      if (brandPhone) brandParts.push(`📞 ${brandPhone}`)
-      if (brandParts.length > 0) captionParts.push(brandParts.join(' | '))
-
-      await sendImage(userPhone, resultUrl, captionParts.join('\n\n'))
+      // Deliver result — image only, no caption, so it can be forwarded directly
+      await sendImage(userPhone, resultUrl)
 
       await resetSession(redis, userPhone)
-
-      await sendButtons(
-        userPhone,
-        'What would you like to do next?',
-        [
-          { type: 'reply', reply: { id: 'festive_post', title: '🎉 Another Post' } },
-          { type: 'reply', reply: { id: 'start_photo', title: '📸 Create Photo' } },
-          { type: 'reply', reply: { id: 'help', title: '❓ Help' } },
-        ],
-      )
 
       logger.info({ jobId, userId, festivalName, resultUrl }, 'Festive post job completed')
     },

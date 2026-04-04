@@ -13,7 +13,7 @@ import { startFestivePost } from './festive-post.handler.js'
 import { startBatchCreate } from './batch-create.handler.js'
 
 const WELCOME_NEW = (name: string) =>
-  `Welcome to *JewelAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *25 free credits* to start (5 credits per photo).`
+  `Welcome to *SvaraAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *25 free credits* to start (5 credits per photo).`
 
 const WELCOME_BACK = (credits: number) =>
   `Welcome back! 👋\n\nYou have *${credits} credit${credits === 1 ? '' : 's'}* remaining.\n\nWhat would you like to do?`
@@ -57,7 +57,7 @@ async function showWelcome(
         ],
       },
     ],
-    '💎 JewelAI',
+    '💎 SvaraAI',
   )
 
   await setSession(fastify.redis, phone, 'IDLE', {})

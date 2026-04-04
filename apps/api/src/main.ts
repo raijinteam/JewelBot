@@ -20,7 +20,7 @@ const LANDING_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JewelAI — AI-Powered Jewelry Photography on WhatsApp</title>
+  <title>SvaraAI — AI-Powered Jewelry Photography on WhatsApp</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -49,7 +49,7 @@ const LANDING_HTML = `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="logo">💎</div>
-    <h1>JewelAI</h1>
+    <h1>SvaraAI</h1>
     <p class="tagline">AI-powered professional jewelry photography — right on WhatsApp</p>
 
     <div class="features">
@@ -91,7 +91,7 @@ const LANDING_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <p class="footer">Powered by JewelAI &bull; Payments secured by Razorpay</p>
+    <p class="footer">Powered by SvaraAI &bull; Payments secured by Razorpay</p>
   </div>
 </body>
 </html>`
@@ -101,7 +101,7 @@ const PRIVACY_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy — JewelAI</title>
+  <title>Privacy Policy — SvaraAI</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; color: #333; line-height: 1.7; }
@@ -119,7 +119,7 @@ const PRIVACY_HTML = `<!DOCTYPE html>
     <h1>Privacy Policy</h1>
     <p class="updated">Last updated: April 1, 2026</p>
 
-    <p><strong>JewelAI</strong> ("we", "our", "us") operates a WhatsApp-based AI photography service for jewelry businesses. This policy explains how we collect, use, and protect your information.</p>
+    <p><strong>SvaraAI</strong> ("we", "our", "us") operates a WhatsApp-based AI photography service for jewelry businesses. This policy explains how we collect, use, and protect your information.</p>
 
     <h2>1. Information We Collect</h2>
     <ul>
@@ -216,7 +216,7 @@ async function bootstrap() {
   // ── Start server ─────────────────────────────────────────────────────────
   try {
     await fastify.listen({ port: env.PORT, host: '0.0.0.0' })
-    logger.info(`JewelAI API listening on port ${env.PORT}`)
+    logger.info(`SvaraAI API listening on port ${env.PORT}`)
   } catch (err) {
     logger.fatal({ err }, 'Failed to start server')
     await worker.close()

@@ -20,7 +20,7 @@ export async function razorpayRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/razorpay/webhook', async (_request, reply) => {
     reply.type('text/html').send(`<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Payment Successful — JewelAI</title>
+<title>Payment Successful — SvaraAI</title>
 <style>body{font-family:-apple-system,sans-serif;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center}.c{max-width:400px;padding:24px}.icon{font-size:64px;margin-bottom:16px}h1{font-size:24px;margin-bottom:8px}p{color:#aaa;font-size:15px;line-height:1.5}</style>
 </head><body><div class="c"><div class="icon">✅</div><h1>Payment Successful!</h1><p>Your credits will be added automatically. You can close this page and go back to WhatsApp.</p></div></body></html>`)
   })

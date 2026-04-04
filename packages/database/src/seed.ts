@@ -17,7 +17,7 @@ const templates = [
   // ── Lifestyle & Fashion ──────────────────────────────────────────────────
   {
     id: 'tpl_model_finger',
-    name: 'Worn by Model (Finger)',
+    name: 'Worn by Model',
     category: 'Lifestyle & Fashion',
     previewUrl: 'https://res.cloudinary.com/dhbq4ad3t/image/upload/v1775295112/ring-model_on4nhg.png',
     basePrompt:
@@ -28,7 +28,7 @@ const templates = [
   },
   {
     id: 'tpl_model_bracelet',
-    name: 'Worn by Model (Bracelet)',
+    name: 'Worn by Model',
     category: 'Lifestyle & Fashion',
     previewUrl: 'https://res.cloudinary.com/dhbq4ad3t/image/upload/v1775295110/Bracelet-model_xjkr2t.png',
     basePrompt:
@@ -39,7 +39,7 @@ const templates = [
   },
   {
     id: 'tpl_model_bangle',
-    name: 'Worn by Model (Bangle)',
+    name: 'Worn by Model',
     category: 'Lifestyle & Fashion',
     previewUrl: 'https://res.cloudinary.com/dhbq4ad3t/image/upload/v1775295110/Bangle-model_sqb8lw.png',
     basePrompt:
@@ -50,7 +50,7 @@ const templates = [
   },
   {
     id: 'tpl_model_neck',
-    name: 'Worn by Model (Neck)',
+    name: 'Worn by Model',
     category: 'Lifestyle & Fashion',
     previewUrl: 'https://res.cloudinary.com/dhbq4ad3t/image/upload/v1775295110/Necklace-model_w7fqrg.png',
     basePrompt:
@@ -61,7 +61,7 @@ const templates = [
   },
   {
     id: 'tpl_model_ear',
-    name: 'Worn by Model (Ear)',
+    name: 'Worn by Model',
     category: 'Lifestyle & Fashion',
     previewUrl: 'https://res.cloudinary.com/dhbq4ad3t/image/upload/v1775295112/Earring-model_za8kfr.png',
     basePrompt:
@@ -72,7 +72,7 @@ const templates = [
   },
   {
     id: 'tpl_model_set',
-    name: 'Worn by Model (Full Set)',
+    name: 'Worn by Model',
     category: 'Lifestyle & Fashion',
     previewUrl: 'https://res.cloudinary.com/dhbq4ad3t/image/upload/v1775295110/Set-Model_o7cqbe.png',
     basePrompt:
@@ -141,7 +141,17 @@ const appConfigs: { key: string; value: string }[] = [
   { key: 'plan_credits_wholesale', value: '1400' },
 ]
 
+// Old templates to remove from DB
+const DEPRECATED_TEMPLATE_IDS = ['tpl_gradient_bg', 'tpl_shadow_drop', 'tpl_model_hand']
+
 async function seed() {
+  // Clean up deprecated templates
+  console.log('Removing deprecated templates...')
+  for (const id of DEPRECATED_TEMPLATE_IDS) {
+    await prisma.template.deleteMany({ where: { id } })
+  }
+  console.log(`✓ Cleaned up ${DEPRECATED_TEMPLATE_IDS.length} deprecated templates`)
+
   console.log('Seeding templates...')
   for (const tpl of templates) {
     await prisma.template.upsert({

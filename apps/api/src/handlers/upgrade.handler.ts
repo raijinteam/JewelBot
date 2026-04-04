@@ -20,7 +20,20 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
 
   await sendList(
     phone,
-    '⬆️ *Upgrade Your Plan*\n\nSubscribe to unlock all features and get monthly credits.\nOr buy a one-time credit pack.\n\n_Each photo costs 5 credits._',
+    [
+      `⬆️ *Upgrade Your Plan*`,
+      ``,
+      `*Starter Plan (₹${starterPrice}/mo)* unlocks:`,
+      `• 💰 Live Gold & Silver Rates`,
+      `• 📋 Billing Calculator`,
+      `• 📄 GST Invoice Generator`,
+      `• 📒 Udhaar Book`,
+      `• ⚙️ Business Profile`,
+      `• 100 credits/month`,
+      ``,
+      `Or buy a *one-time credit pack* for photos.`,
+      `_Each photo costs 5 credits._`,
+    ].join('\n'),
     '💳 Select Option',
     [
       {

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { MetaMessage } from '../whatsapp/wa.types.js'
-import { sendList, sendText } from '../whatsapp/wa.messages.js'
+import { sendList, sendText, sendButtons } from '../whatsapp/wa.messages.js'
 import { setSession } from '../session/session.service.js'
 import { findOrCreateUser } from '../users/user.service.js'
 import { getCreditBalance, hasPaidPlan } from '../billing/credits.service.js'
@@ -32,21 +32,29 @@ async function showWelcome(
     ? `${WELCOME_NEW(user.name ?? 'there')}\n\nTap the menu below to get started:`
     : WELCOME_BACK(balance)
 
+  const paid = await hasPaidPlan(user.id)
+
   await sendList(
     phone,
     bodyText,
     '📋 Menu',
     [
       {
-        title: 'Features',
+        title: 'Free Features',
         rows: [
-          { id: 'start_photo', title: '📸 Create Photo', description: 'Generate professional product photos' },
-          { id: 'price_calc', title: '💰 Live Rates', description: 'Live gold & silver prices' },
-          { id: 'billing_calc', title: '📋 Billing Calculator', description: 'Generate itemized bill estimate' },
-          { id: 'gen_invoice', title: '📄 GST Invoice', description: 'Create a tax invoice with GST' },
+          { id: 'start_photo', title: '📸 Create Photo', description: 'AI product photos (5 credits each)' },
           { id: 'batch_create', title: '📸 Batch Photos', description: 'Process up to 10 photos at once' },
-          { id: 'festive_post', title: '🎉 Festive Posts', description: 'Create branded festival greetings' },
-          { id: 'ledger', title: '📒 Udhaar Book', description: 'Track customer credit & dues' },
+          { id: 'festive_post', title: '🎉 Festive Posts', description: 'Branded festival greetings' },
+        ],
+      },
+      {
+        title: paid ? 'Pro Features' : 'Pro Features 🔒 (Starter Plan)',
+        rows: [
+          { id: 'price_calc', title: '💰 Live Rates', description: paid ? 'Live gold & silver prices' : '🔒 Requires Starter plan' },
+          { id: 'billing_calc', title: '📋 Billing Calculator', description: paid ? 'Generate itemized bill estimate' : '🔒 Requires Starter plan' },
+          { id: 'gen_invoice', title: '📄 GST Invoice', description: paid ? 'Create a tax invoice with GST' : '🔒 Requires Starter plan' },
+          { id: 'ledger', title: '📒 Udhaar Book', description: paid ? 'Track customer credit & dues' : '🔒 Requires Starter plan' },
+          { id: 'my_business', title: '⚙️ My Business', description: paid ? 'View & edit business profile' : '🔒 Requires Starter plan' },
         ],
       },
       {
@@ -54,7 +62,6 @@ async function showWelcome(
         rows: [
           { id: 'view_credits', title: '💳 My Credits', description: 'Check your remaining credits' },
           { id: 'upgrade', title: '⬆️ Plans & Credits', description: 'Subscribe or buy credit packs' },
-          { id: 'my_business', title: '⚙️ My Business', description: 'View & edit business profile' },
         ],
       },
     ],
@@ -63,9 +70,6 @@ async function showWelcome(
 
   await setSession(fastify.redis, phone, 'IDLE', {})
 }
-
-const UPGRADE_MSG =
-  `🔒 *Subscription Required*\n\nThis feature is available on paid plans (Starter and above).\n\nTap the menu and select *⬆️ Upgrade Plan* to subscribe starting at just ₹99/mo.`
 
 export async function handleIdleInteractive(
   replyId: string,
@@ -79,7 +83,24 @@ export async function handleIdleInteractive(
     const user = await findOrCreateUser(phone)
     const paid = await hasPaidPlan(user.id)
     if (!paid) {
-      await sendText(phone, UPGRADE_MSG)
+      await sendButtons(
+        phone,
+        [
+          `🔒 *Subscription Required*`,
+          ``,
+          `Subscribe to *Starter Plan (₹99/mo)* to unlock:`,
+          `• 💰 Live Gold & Silver Rates`,
+          `• 📋 Billing Calculator`,
+          `• 📄 GST Invoice Generator`,
+          `• 📒 Udhaar Book`,
+          `• ⚙️ Business Profile`,
+          `• 100 credits/month for photo generation`,
+        ].join('\n'),
+        [
+          { type: 'reply', reply: { id: 'upgrade', title: '⬆️ Subscribe Now' } },
+          { type: 'reply', reply: { id: 'cancel', title: '❌ Cancel' } },
+        ],
+      )
       return
     }
   }

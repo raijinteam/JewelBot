@@ -83,11 +83,11 @@ const LANDING_HTML = `<!DOCTYPE html>
       <h2>Plans</h2>
       <div class="plans">
         <div class="plan"><div class="name">Free Demo</div><div class="price">₹0</div><div class="credits">25 credits</div></div>
-        <div class="plan"><div class="name">Starter</div><div class="price">₹149/mo</div><div class="credits">50 credits/month</div></div>
+        <div class="plan"><div class="name">Starter</div><div class="price">₹99/mo</div><div class="credits">100 credits/month</div></div>
         <div class="plan"><div class="name">Shop</div><div class="price">₹499/mo</div><div class="credits">200 credits/month</div></div>
         <div class="plan"><div class="name">Pro</div><div class="price">₹999/mo</div><div class="credits">500 credits/month</div></div>
         <div class="plan"><div class="name">Wholesale</div><div class="price">₹1,999/mo</div><div class="credits">1400 credits/month</div></div>
-        <div class="plan"><div class="name">Credit Packs</div><div class="price">From ₹199</div><div class="credits">100–2500 credits</div></div>
+        <div class="plan"><div class="name">Credit Packs</div><div class="price">From ₹149</div><div class="credits">200–5000 credits</div></div>
       </div>
     </div>
 

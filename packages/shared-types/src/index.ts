@@ -124,14 +124,14 @@ export type PlanId = 'FREE' | 'STARTER' | 'SHOP' | 'PRO' | 'WHOLESALE'
 
 export const PLAN_CREDITS: Record<PlanId, number> = {
   FREE: 25,        // lifetime demo
-  STARTER: 50,     // per month
+  STARTER: 100,    // per month
   SHOP: 200,       // per month
   PRO: 500,        // per month
   WHOLESALE: 1400, // per month
 }
 
 export const PLAN_PRICES_INR: Record<Exclude<PlanId, 'FREE'>, number> = {
-  STARTER: 149,
+  STARTER: 99,
   SHOP: 499,
   PRO: 999,
   WHOLESALE: 1999,
@@ -143,7 +143,7 @@ export const CREDIT_COST_PHOTO = 5
 
 // ─── Credit Packs (one-time purchase) ────────────────────────────────────────
 
-export type CreditPackId = 'pack_100' | 'pack_250' | 'pack_500' | 'pack_1000' | 'pack_2500'
+export type CreditPackId = 'pack_200' | 'pack_400' | 'pack_1000' | 'pack_2500' | 'pack_5000'
 
 export interface CreditPack {
   id: CreditPackId
@@ -152,11 +152,11 @@ export interface CreditPack {
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: 'pack_100',  credits: 100,  priceInr: 199 },
-  { id: 'pack_250',  credits: 250,  priceInr: 449 },
-  { id: 'pack_500',  credits: 500,  priceInr: 799 },
-  { id: 'pack_1000', credits: 1000, priceInr: 1399 },
-  { id: 'pack_2500', credits: 2500, priceInr: 2999 },
+  { id: 'pack_200',  credits: 200,  priceInr: 149 },
+  { id: 'pack_400',  credits: 400,  priceInr: 249 },
+  { id: 'pack_1000', credits: 1000, priceInr: 599 },
+  { id: 'pack_2500', credits: 2500, priceInr: 1299 },
+  { id: 'pack_5000', credits: 5000, priceInr: 2399 },
 ]
 
 // ─── Image Gen Job Payload ────────────────────────────────────────────────────

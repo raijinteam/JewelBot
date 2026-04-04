@@ -26,7 +26,7 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
       {
         title: 'Monthly Plan',
         rows: [
-          { id: 'upgrade_starter', title: `Starter — ₹${starterPrice}/mo`, description: '50 credits/month + all features' },
+          { id: 'upgrade_starter', title: `Starter — ₹${starterPrice}/mo`, description: '100 credits/month + all features' },
         ],
       },
       {

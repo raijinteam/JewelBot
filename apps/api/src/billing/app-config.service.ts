@@ -17,7 +17,7 @@ async function getConfigValue(redis: Redis, key: string, fallback: string): Prom
 export async function getPlanPrice(redis: Redis, plan: string): Promise<number> {
   const key = `plan_price_${plan.toLowerCase()}`
   const fallbacks: Record<string, string> = {
-    plan_price_starter: '149',
+    plan_price_starter: '99',
     plan_price_shop: '499',
     plan_price_pro: '999',
     plan_price_wholesale: '1999',
@@ -30,7 +30,7 @@ export async function getPlanCredits(redis: Redis, plan: string): Promise<number
   const key = `plan_credits_${plan.toLowerCase()}`
   const fallbacks: Record<string, string> = {
     plan_credits_free: '25',
-    plan_credits_starter: '50',
+    plan_credits_starter: '100',
     plan_credits_shop: '200',
     plan_credits_pro: '500',
     plan_credits_wholesale: '1400',

@@ -65,7 +65,7 @@ async function showWelcome(
 }
 
 const UPGRADE_MSG =
-  `🔒 *Subscription Required*\n\nThis feature is available on paid plans (Starter and above).\n\nTap the menu and select *⬆️ Upgrade Plan* to subscribe starting at just ₹149/mo.`
+  `🔒 *Subscription Required*\n\nThis feature is available on paid plans (Starter and above).\n\nTap the menu and select *⬆️ Upgrade Plan* to subscribe starting at just ₹99/mo.`
 
 export async function handleIdleInteractive(
   replyId: string,

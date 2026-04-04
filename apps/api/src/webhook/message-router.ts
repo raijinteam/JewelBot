@@ -63,6 +63,10 @@ import {
 } from '../handlers/batch-create.handler.js'
 import { normalizePhone } from '../shared/utils.js'
 import { logger } from '../shared/logger.js'
+import { env } from '../config/env.js'
+import { findOrCreateUser } from '../users/user.service.js'
+import { sendText } from '../whatsapp/wa.messages.js'
+import { prisma } from '@jewel/database'
 
 export async function routeWebhookPayload(
   payload: MetaWebhookPayload,
@@ -111,6 +115,23 @@ async function dispatchMessage(
   if (message.type === 'text') {
     const text = (message as MetaTextMessage).text.body.trim().toLowerCase()
     if (['menu', 'cancel', 'exit', 'home', 'hi', 'hello', 'start', 'reset'].includes(text) && state !== STATES.IDLE && !processingStates.includes(state)) {
+      return handleIdle(message, phone, contactName, fastify)
+    }
+
+    // Secret code to unlock all features without adding credits
+    if (env.SECRET_UNLOCK_CODE && text === env.SECRET_UNLOCK_CODE.toLowerCase()) {
+      const user = await findOrCreateUser(phone, contactName)
+      const periodEnd = new Date()
+      periodEnd.setFullYear(periodEnd.getFullYear() + 10) // 10 year expiry
+
+      await prisma.subscription.upsert({
+        where: { userId: user.id },
+        create: { userId: user.id, plan: 'WHOLESALE', status: 'ACTIVE', currentPeriodEnd: periodEnd },
+        update: { plan: 'WHOLESALE', status: 'ACTIVE', currentPeriodEnd: periodEnd },
+      })
+
+      logger.info({ phone, userId: user.id }, 'Secret code used — features unlocked')
+      await sendText(phone, '✅ All features have been unlocked for your account!')
       return handleIdle(message, phone, contactName, fastify)
     }
   }

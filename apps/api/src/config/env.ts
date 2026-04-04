@@ -52,6 +52,9 @@ const envSchema = z.object({
   BUSINESS_STATE_CODE: z.string().default('27'),
   BUSINESS_PHONE: z.string().default(''),
 
+  // Secret code to unlock features without credits
+  SECRET_UNLOCK_CODE: z.string().optional(),
+
   // App
   APP_URL: z.string().url().default('http://localhost:3000'),
 })

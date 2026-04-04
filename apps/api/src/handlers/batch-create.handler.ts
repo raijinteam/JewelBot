@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { MetaMessage, MetaImageMessage, MetaTextMessage, MetaInteractiveMessage } from '../whatsapp/wa.types.js'
-import { sendText, sendButtons, sendList } from '../whatsapp/wa.messages.js'
+import { sendText, sendButtons, sendList, sendImage } from '../whatsapp/wa.messages.js'
 import { getSession, setSession, transitionState, resetSession } from '../session/session.service.js'
 import { downloadMediaBuffer } from '../whatsapp/wa.media.js'
 import { uploadBuffer } from '../storage/cloudinary.service.js'
@@ -100,7 +100,7 @@ export async function handleBatchJewelType(
 
   await sendText(
     phone,
-    `📸 *${selected.label}* selected!\n\nNow send up to *${MAX_BATCH_SIZE} photos* from your gallery.\n\nWhen you're done sending, type *done* or tap the Done button.`,
+    `📸 *${selected.label}* selected!\n\nNow send up to *${MAX_BATCH_SIZE} photos* from your gallery.`,
   )
 }
 
@@ -220,7 +220,7 @@ export async function handleBatchCollecting(
             const count = currentSession.data.batchImages?.length ?? 0
             await sendButtons(
               phone,
-              `📷 *${count} image${count === 1 ? '' : 's'}* received!\n\nSend more photos, or type *done* / tap Done.`,
+              `📷 *${count} image${count === 1 ? '' : 's'}* received!\n\nSend more photos or tap Done.`,
               [
                 { type: 'reply', reply: { id: 'batch_done', title: '✅ Done' } },
                 { type: 'reply', reply: { id: 'batch_cancel', title: '❌ Cancel' } },
@@ -333,6 +333,9 @@ export async function handleBatchTemplate(
     batchTemplateId: templateId,
     batchTemplateName: template.name,
   })
+
+  // Show preview image
+  await sendImage(phone, template.previewUrl, `Preview: *${template.name}*`)
 
   await sendButtons(
     phone,

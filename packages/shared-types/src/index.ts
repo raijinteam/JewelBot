@@ -43,6 +43,7 @@ export type SessionState =
   | 'FESTIVE_FESTIVAL_INPUT'
   | 'FESTIVE_CONFIRM'
   | 'FESTIVE_PROCESSING'
+  | 'AWAITING_JEWEL_TYPE'
 
 export interface SessionData {
   sourceImageUrl?: string
@@ -108,6 +109,7 @@ export type JewellType =
   | 'nose_pin'
   | 'anklet'
   | 'brooch'
+  | 'jewelry_set'
   | 'other'
 
 export interface JewelryAnalysis {

@@ -52,6 +52,7 @@ import {
   handleFestiveFestivalInput,
   handleFestiveProcessing,
 } from '../handlers/festive-post.handler.js'
+import { handleAwaitingJewelType } from '../handlers/awaiting-jewel-type.handler.js'
 import {
   handleBatchCollecting,
   handleBatchTemplate,
@@ -126,6 +127,9 @@ async function dispatchMessage(
         return handleIdleInteractive(replyId, phone, fastify)
       }
       return handleIdle(message, phone, contactName, fastify)
+
+    case STATES.AWAITING_JEWEL_TYPE:
+      return handleAwaitingJewelType(message, phone, fastify)
 
     case STATES.AWAITING_IMAGE:
       if (message.type === 'image') {

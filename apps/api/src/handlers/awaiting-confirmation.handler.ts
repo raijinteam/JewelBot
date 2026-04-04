@@ -30,7 +30,7 @@ export async function handleAwaitingConfirmation(
     const templates = await getCompatibleTemplates(data.jewellType ?? 'other', subscription?.plan ?? 'FREE')
 
     if (templates.length) {
-      await sendTemplateGallery(phone, data.jewellType ?? 'jewelry', data.jewellDescription ?? '', templates)
+      await sendTemplateGallery(phone, data.jewellType ?? 'jewelry', templates)
     }
     return
   }

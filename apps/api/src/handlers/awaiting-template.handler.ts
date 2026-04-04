@@ -5,11 +5,22 @@ import { sendList, sendImage, sendButtons } from '../whatsapp/wa.messages.js'
 import { getSession, transitionState } from '../session/session.service.js'
 import { getTemplateById } from '../features/image-generation/templates.service.js'
 
+const JEWEL_TYPE_LABEL: Record<string, string> = {
+  jewelry_set: 'Jewelry Set',
+  ring: 'Ring',
+  necklace: 'Necklace / Pendant',
+  earrings: 'Earrings',
+  bracelet: 'Bracelet',
+  bangle: 'Bangle / Kada',
+  pendant: 'Pendant',
+  nose_pin: 'Nose Pin',
+  anklet: 'Anklet',
+}
+
 /** Build and send the template gallery as a WhatsApp List Message */
 export async function sendTemplateGallery(
   phone: string,
   jewellType: string,
-  jewellDescription: string,
   templates: Template[],
 ): Promise<void> {
   // Group templates by category
@@ -34,13 +45,14 @@ export async function sendTemplateGallery(
     rowCount += rows.length
   }
 
+  const typeLabel = JEWEL_TYPE_LABEL[jewellType] ?? jewellType
+
   await sendList(
     phone,
-    `✨ I detected: *${jewellType}*\n\n_"${jewellDescription.slice(0, 120)}"_\n\nChoose a style to apply:`,
+    `📸 *${typeLabel}* — Choose a style to apply:`,
     'Select Template',
     sections,
     '🎨 Choose Your Photo Style',
-    `${templates.length} templates available`,
   )
 }
 

@@ -11,6 +11,7 @@ import { showUpgradeMenu } from './upgrade.handler.js'
 import { showBizProfile } from './business-profile.handler.js'
 import { startFestivePost } from './festive-post.handler.js'
 import { startBatchCreate } from './batch-create.handler.js'
+import { showJewelTypeMenu } from './awaiting-jewel-type.handler.js'
 
 const WELCOME_NEW = (name: string) =>
   `Welcome to *SvaraAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *25 free credits* to start (5 credits per photo).`
@@ -84,8 +85,7 @@ export async function handleIdleInteractive(
   }
 
   if (replyId === 'start_photo') {
-    await setSession(fastify.redis, phone, 'AWAITING_IMAGE', {})
-    await sendText(phone, '📸 Please send me a clear photo of the jewelry you want to enhance.')
+    await showJewelTypeMenu(phone, fastify)
     return
   }
   if (replyId === 'price_calc') {

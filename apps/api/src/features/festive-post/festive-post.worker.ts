@@ -10,7 +10,7 @@ import { deductCredit } from '../../billing/credits.service.js'
 import { resetSession } from '../../session/session.service.js'
 import { logger } from '../../shared/logger.js'
 import type { FestivePostJobPayload } from '@jewel/shared-types'
-import { CREDIT_COST_PHOTO } from '../../config/constants.js'
+import { CREDIT_COST_FESTIVE } from '../../config/constants.js'
 
 const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null })
 
@@ -69,7 +69,7 @@ export function startFestivePostWorker() {
 
       // Deduct credits
       try {
-        await deductCredit(userId, CREDIT_COST_PHOTO)
+        await deductCredit(userId, CREDIT_COST_FESTIVE)
       } catch {
         logger.error({ userId, jobId }, 'Credit deduction failed after festive post generation')
       }
@@ -81,7 +81,7 @@ export function startFestivePostWorker() {
           status: 'DONE',
           resultImageUrl: resultUrl,
           completedAt: new Date(),
-          creditsUsed: CREDIT_COST_PHOTO,
+          creditsUsed: CREDIT_COST_FESTIVE,
         },
       })
 

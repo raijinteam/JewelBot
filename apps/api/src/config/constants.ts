@@ -19,6 +19,9 @@ export const FREE_TIER_LIFETIME_CREDITS = 25
 // Credits consumed per photo generation
 export const CREDIT_COST_PHOTO = 5
 
+// Credits consumed per festive post
+export const CREDIT_COST_FESTIVE = 8
+
 // Session state names (mirrors @jewel/shared-types SessionState)
 export const STATES = {
   IDLE: 'IDLE',

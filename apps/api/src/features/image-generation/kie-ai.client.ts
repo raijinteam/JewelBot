@@ -51,27 +51,24 @@ export interface KieJobRequest {
   prompt: string
   callbackUrl?: string
   aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '4:5' | '5:4' | 'auto'
-  resolution?: '1K' | '2K' | '4K'
   outputFormat?: 'jpg' | 'png'
 }
 
 /**
- * Submit a generation job to Kie AI (NanoBanana 2).
+ * Submit a generation job to Kie AI (NanoBanana).
  * POST /api/v1/jobs/createTask
  * Returns the taskId.
  */
 export async function submitKieJob(req: KieJobRequest): Promise<string> {
   try {
     const res = await kieClient.post<KieCreateTaskResponse>('/api/v1/jobs/createTask', {
-      model: 'nano-banana-2',
+      model: 'google/nano-banana-edit',
       ...(req.callbackUrl ? { callBackUrl: req.callbackUrl } : {}),
       input: {
         prompt: req.prompt,
-        image_input: [req.imageUrl],
-        aspect_ratio: req.aspectRatio ?? '1:1',
-        google_search: false,
-        resolution: req.resolution ?? '1K',
-        output_format: req.outputFormat ?? 'jpg',
+        image_urls: [req.imageUrl],
+        image_size: req.aspectRatio ?? '1:1',
+        output_format: req.outputFormat ?? 'png',
       },
     })
 

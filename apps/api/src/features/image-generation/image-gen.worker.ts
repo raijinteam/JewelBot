@@ -41,8 +41,7 @@ export function startImageGenWorker() {
           prompt: template.basePrompt,
           callbackUrl: `${env.APP_URL}/webhook/kie-callback`,
           aspectRatio: aspectRatio ?? '1:1',
-          resolution: '1K',
-          outputFormat: 'jpg',
+          outputFormat: 'png',
         })
 
         // Poll until done (callback is best-effort; polling is the reliable path)

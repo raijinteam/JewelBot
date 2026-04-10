@@ -36,8 +36,7 @@ export function startFestivePostWorker() {
           prompt,
           callbackUrl: `${env.APP_URL}/webhook/kie-callback`,
           aspectRatio: '4:5',
-          resolution: '1K',
-          outputFormat: 'jpg',
+          outputFormat: 'png',
         })
 
         // Poll until done

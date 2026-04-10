@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary'
 import { env } from '../config/env.js'
+import { logger } from '../shared/logger.js'
 
 // Ensure cloudinary is configured (in case this is called before plugin init)
 cloudinary.config({
@@ -50,4 +51,55 @@ export async function uploadFromUrl(url: string, folder: string): Promise<string
     quality: 90,
   })
   return result.secure_url
+}
+
+/**
+ * Delete all images older than `maxAgeMs` in the given folders.
+ * Uses Cloudinary Admin API search to find old resources, then bulk-deletes.
+ */
+export async function deleteOldImages(
+  folders: string[],
+  maxAgeMs: number,
+): Promise<number> {
+  const cutoff = new Date(Date.now() - maxAgeMs)
+  const cutoffStr = cutoff.toISOString().replace('T', ' ').slice(0, 19) // "YYYY-MM-DD HH:MM:SS"
+  let totalDeleted = 0
+
+  for (const folder of folders) {
+    try {
+      let nextCursor: string | undefined
+      const publicIds: string[] = []
+
+      // Paginate through search results
+      do {
+        const search = cloudinary.search
+          .expression(`folder:${folder}/* AND uploaded_at<${cutoffStr}`)
+          .max_results(500)
+          .sort_by('uploaded_at', 'asc')
+
+        if (nextCursor) search.next_cursor(nextCursor)
+
+        const result = await search.execute()
+        for (const resource of result.resources ?? []) {
+          publicIds.push(resource.public_id)
+        }
+        nextCursor = result.next_cursor
+      } while (nextCursor)
+
+      // Bulk delete in batches of 100 (Cloudinary limit)
+      for (let i = 0; i < publicIds.length; i += 100) {
+        const batch = publicIds.slice(i, i + 100)
+        await cloudinary.api.delete_resources(batch)
+      }
+
+      if (publicIds.length > 0) {
+        logger.info({ folder, count: publicIds.length }, 'Deleted old Cloudinary images')
+      }
+      totalDeleted += publicIds.length
+    } catch (err) {
+      logger.error({ err, folder }, 'Failed to clean up old Cloudinary images')
+    }
+  }
+
+  return totalDeleted
 }

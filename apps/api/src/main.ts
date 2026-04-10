@@ -14,6 +14,7 @@ import { razorpayRoutes } from './webhook/razorpay.router.js'
 // Workers
 import { startImageGenWorker } from './features/image-generation/image-gen.worker.js'
 import { startFestivePostWorker } from './features/festive-post/festive-post.worker.js'
+import { startCleanupWorker } from './storage/cleanup.worker.js'
 
 const LANDING_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -212,6 +213,7 @@ async function bootstrap() {
   // ── Start BullMQ workers ─────────────────────────────────────────────────
   const worker = startImageGenWorker()
   const festiveWorker = startFestivePostWorker()
+  startCleanupWorker()
 
   // ── Start server ─────────────────────────────────────────────────────────
   try {

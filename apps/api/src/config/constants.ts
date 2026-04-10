@@ -11,7 +11,11 @@ export const MAX_IMAGE_SIZE_BYTES = 16 * 1024 * 1024
 export const QUEUES = {
   IMAGE_GENERATION: 'image-generation',
   FESTIVE_POST: 'festive-post',
+  CLEANUP: 'cleanup',
 } as const
+
+// Auto-delete Cloudinary images older than 48 hours
+export const CLOUDINARY_IMAGE_MAX_AGE_MS = 48 * 60 * 60 * 1000
 
 // Free tier lifetime credits
 export const FREE_TIER_LIFETIME_CREDITS = 25

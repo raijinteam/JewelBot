@@ -54,11 +54,33 @@ export async function handleVideoUpload(
     const buffer = await downloadMediaBuffer(img.image.id)
     const sourceImageUrl = await uploadBuffer(buffer, `jewel/source/${user.id}`)
 
+    // Auto-skip template + sub-template selection if only one of each
+    if (VIDEO_TEMPLATES.length === 1) {
+      const template = VIDEO_TEMPLATES[0]
+      if (template.subTemplates.length === 1) {
+        const sub = template.subTemplates[0]
+        await transitionState(fastify.redis, phone, 'VIDEO_ASPECT_RATIO', {
+          videoSourceImageUrl: sourceImageUrl,
+          videoTemplateId: template.id,
+          videoSubTemplateId: sub.id,
+        })
+
+        // Show preview
+        if (sub.previewUrl && !sub.previewUrl.includes('placehold.co')) {
+          await sendImage(phone, sub.previewUrl, `🎬 *${template.name}* > *${sub.name}*`)
+        } else {
+          await sendText(phone, `🎬 *${template.name}* > *${sub.name}*`)
+        }
+
+        await sendAspectRatioButtons(phone)
+        return
+      }
+    }
+
     await transitionState(fastify.redis, phone, 'VIDEO_TEMPLATE', {
       videoSourceImageUrl: sourceImageUrl,
     })
 
-    // Show video template list
     await sendVideoTemplateList(phone)
   } catch (err) {
     logger.error({ err, phone }, 'Failed to upload video source image')
@@ -72,15 +94,6 @@ async function sendVideoTemplateList(phone: string): Promise<void> {
   if (VIDEO_TEMPLATES.length === 0) {
     await sendText(phone, 'No video templates available. Please try again later.')
     return
-  }
-
-  // If only one template, auto-select it and go to sub-templates
-  if (VIDEO_TEMPLATES.length === 1) {
-    const template = VIDEO_TEMPLATES[0]
-    if (template.subTemplates.length === 1) {
-      // Only one sub-template too — skip both selections
-      await sendText(phone, `🎬 *${template.name}* > *${template.subTemplates[0].name}*`)
-    }
   }
 
   await sendList(

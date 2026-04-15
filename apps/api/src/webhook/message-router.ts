@@ -61,6 +61,14 @@ import {
   handleBatchConfirm,
   handleBatchProcessing,
 } from '../handlers/batch-create.handler.js'
+import {
+  handleVideoUpload,
+  handleVideoTemplate,
+  handleVideoSubTemplate,
+  handleVideoAspectRatio,
+  handleVideoConfirm,
+  handleVideoProcessing,
+} from '../handlers/video-create.handler.js'
 import { normalizePhone } from '../shared/utils.js'
 import { logger } from '../shared/logger.js'
 import { env } from '../config/env.js'
@@ -111,7 +119,7 @@ async function dispatchMessage(
   }
 
   // Global cancel/menu command — works from any state except when processing images
-  const processingStates: string[] = [STATES.PROCESSING, STATES.BATCH_PROCESSING, STATES.FESTIVE_PROCESSING]
+  const processingStates: string[] = [STATES.PROCESSING, STATES.BATCH_PROCESSING, STATES.FESTIVE_PROCESSING, STATES.VIDEO_PROCESSING]
   if (message.type === 'text') {
     const text = (message as MetaTextMessage).text.body.trim().toLowerCase()
     if (['menu', 'cancel', 'exit', 'home', 'hi', 'hello', 'start', 'reset'].includes(text) && state !== STATES.IDLE && !processingStates.includes(state)) {
@@ -279,6 +287,24 @@ async function dispatchMessage(
 
     case STATES.BATCH_PROCESSING:
       return handleBatchProcessing(phone, fastify)
+
+    case STATES.VIDEO_UPLOAD:
+      return handleVideoUpload(message, phone, fastify)
+
+    case STATES.VIDEO_TEMPLATE:
+      return handleVideoTemplate(message, phone, fastify)
+
+    case STATES.VIDEO_SUB_TEMPLATE:
+      return handleVideoSubTemplate(message, phone, fastify)
+
+    case STATES.VIDEO_ASPECT_RATIO:
+      return handleVideoAspectRatio(message, phone, fastify)
+
+    case STATES.VIDEO_CONFIRM:
+      return handleVideoConfirm(message, phone, fastify)
+
+    case STATES.VIDEO_PROCESSING:
+      return handleVideoProcessing(phone, fastify)
 
     default:
       return handleIdle(message, phone, contactName, fastify)

@@ -4,6 +4,7 @@ import { sendList, sendText, sendButtons } from '../whatsapp/wa.messages.js'
 import { setSession } from '../session/session.service.js'
 import { findOrCreateUser } from '../users/user.service.js'
 import { getCreditBalance, hasPaidPlan } from '../billing/credits.service.js'
+import { CREDIT_COST_VIDEO } from '../config/constants.js'
 import { showLiveRates } from './price-calc.handler.js'
 import { startBillingCalc } from './billing-calc.handler.js'
 import { showLedgerMenu } from './ledger.handler.js'
@@ -12,6 +13,7 @@ import { showBizProfile } from './business-profile.handler.js'
 import { startFestivePost } from './festive-post.handler.js'
 import { startBatchCreate } from './batch-create.handler.js'
 import { showJewelTypeMenu } from './awaiting-jewel-type.handler.js'
+import { startVideoCreate } from './video-create.handler.js'
 
 const WELCOME_NEW = (name: string) =>
   `Welcome to *SvaraAI* 💎, ${name}!\n\nI help jewelry businesses create stunning professional product photos in seconds.\n\nYou get *25 free credits* to start (5 credits per photo).`
@@ -45,6 +47,7 @@ async function showWelcome(
           { id: 'start_photo', title: '📸 Create Photo', description: 'AI product photos (5 credits each)' },
           { id: 'batch_create', title: '📸 Batch Photos', description: 'Process up to 10 photos at once' },
           { id: 'festive_post', title: '🎉 Festive Posts', description: 'Branded festival greetings' },
+          { id: 'video_create', title: '🎬 Create Video', description: `AI jewelry video (${CREDIT_COST_VIDEO} credits)` },
         ],
       },
       {
@@ -60,8 +63,7 @@ async function showWelcome(
       {
         title: 'Account',
         rows: [
-          { id: 'view_credits', title: '💳 My Credits', description: 'Check your remaining credits' },
-          { id: 'upgrade', title: '⬆️ Plans & Credits', description: 'Subscribe or buy credit packs' },
+          { id: 'upgrade', title: '⬆️ Plans & Credits', description: 'View credits, subscribe, or buy packs' },
         ],
       },
     ],
@@ -94,7 +96,7 @@ export async function handleIdleInteractive(
           `• 📄 GST Invoice Generator`,
           `• 📒 Udhaar Book`,
           `• ⚙️ Business Profile`,
-          `• 100 credits/month for photo generation`,
+          `• 80 credits/month for photo generation`,
         ].join('\n'),
         [
           { type: 'reply', reply: { id: 'upgrade', title: '⬆️ Subscribe Now' } },
@@ -148,6 +150,10 @@ export async function handleIdleInteractive(
   }
   if (replyId === 'festive_post') {
     await startFestivePost(phone, fastify)
+    return
+  }
+  if (replyId === 'video_create') {
+    await startVideoCreate(phone, fastify)
     return
   }
   await showWelcome(phone, undefined, fastify)

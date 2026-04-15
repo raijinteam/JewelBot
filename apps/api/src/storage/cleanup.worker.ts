@@ -3,7 +3,7 @@ import { CLOUDINARY_IMAGE_MAX_AGE_MS } from '../config/constants.js'
 import { deleteOldImages } from './cloudinary.service.js'
 import { logger } from '../shared/logger.js'
 
-const CLEANUP_FOLDERS = ['jewel/source', 'jewel/generated', 'jewel/festive']
+const CLEANUP_FOLDERS = ['jewel/source', 'jewel/generated', 'jewel/festive', 'jewel/videos']
 const CLEANUP_INTERVAL_MS = 6 * 60 * 60 * 1000 // every 6 hours
 
 async function runCleanup(): Promise<void> {

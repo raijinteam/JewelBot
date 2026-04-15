@@ -54,6 +54,17 @@ export async function uploadFromUrl(url: string, folder: string): Promise<string
 }
 
 /**
+ * Upload a video from a remote URL to Cloudinary.
+ */
+export async function uploadVideoFromUrl(url: string, folder: string): Promise<string> {
+  const result = await cloudinary.uploader.upload(url, {
+    folder,
+    resource_type: 'video',
+  })
+  return result.secure_url
+}
+
+/**
  * Delete all images older than `maxAgeMs` in the given folders.
  * Uses Cloudinary Admin API search to find old resources, then bulk-deletes.
  */

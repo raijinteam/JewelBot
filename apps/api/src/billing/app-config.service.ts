@@ -30,7 +30,7 @@ export async function getPlanCredits(redis: Redis, plan: string): Promise<number
   const key = `plan_credits_${plan.toLowerCase()}`
   const fallbacks: Record<string, string> = {
     plan_credits_free: '25',
-    plan_credits_starter: '100',
+    plan_credits_starter: '80',
     plan_credits_shop: '200',
     plan_credits_pro: '500',
     plan_credits_wholesale: '1400',

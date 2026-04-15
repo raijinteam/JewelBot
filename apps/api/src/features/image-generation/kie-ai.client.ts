@@ -133,6 +133,47 @@ export async function pollKieJob(
   throw new ImageGenerationError(`Kie AI task timed out after ${maxAttempts * intervalMs / 1000}s`)
 }
 
+// ─── NanoBanana 2 (used for video frame generation) ─────────────────────────
+
+export interface NanoBanana2Request {
+  imageUrls: string[]   // one or more reference images
+  prompt: string
+  aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '4:5' | '5:4' | 'auto'
+  resolution?: '1K' | '2K' | '4K'
+  outputFormat?: 'jpg' | 'png'
+}
+
+/**
+ * Submit a generation job to NanoBanana 2.
+ * Used for video frame generation (different model from nano-banana-edit).
+ * Returns the taskId. Poll with pollKieJob().
+ */
+export async function submitNanoBanana2Job(req: NanoBanana2Request): Promise<string> {
+  try {
+    const res = await kieClient.post<KieCreateTaskResponse>('/api/v1/jobs/createTask', {
+      model: 'nano-banana-2',
+      input: {
+        prompt: req.prompt,
+        image_input: req.imageUrls,
+        aspect_ratio: req.aspectRatio ?? '1:1',
+        google_search: false,
+        resolution: req.resolution ?? '1K',
+        output_format: req.outputFormat ?? 'png',
+      },
+    })
+
+    if (res.data.code !== 200) {
+      throw new ImageGenerationError(`NanoBanana 2 rejected task: ${res.data.message}`)
+    }
+
+    logger.info({ taskId: res.data.data.taskId }, 'NanoBanana 2 task submitted')
+    return res.data.data.taskId
+  } catch (err) {
+    if (err instanceof ImageGenerationError) throw err
+    throw new ImageGenerationError(`NanoBanana 2 submission failed: ${(err as Error).message}`)
+  }
+}
+
 /**
  * Parse resultJson (a JSON string) and return the first result URL.
  * resultJson shape: '{"resultUrls":["https://..."]}'

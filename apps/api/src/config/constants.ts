@@ -11,6 +11,7 @@ export const MAX_IMAGE_SIZE_BYTES = 16 * 1024 * 1024
 export const QUEUES = {
   IMAGE_GENERATION: 'image-generation',
   FESTIVE_POST: 'festive-post',
+  VIDEO_GENERATION: 'video-generation',
   CLEANUP: 'cleanup',
 } as const
 
@@ -25,6 +26,9 @@ export const CREDIT_COST_PHOTO = 5
 
 // Credits consumed per festive post
 export const CREDIT_COST_FESTIVE = 8
+
+// Credits consumed per video generation
+export const CREDIT_COST_VIDEO = 60
 
 // Session state names (mirrors @jewel/shared-types SessionState)
 export const STATES = {
@@ -72,6 +76,12 @@ export const STATES = {
   FESTIVE_PROCESSING: 'FESTIVE_PROCESSING',
   AWAITING_JEWEL_TYPE: 'AWAITING_JEWEL_TYPE',
   BATCH_JEWEL_TYPE: 'BATCH_JEWEL_TYPE',
+  VIDEO_UPLOAD: 'VIDEO_UPLOAD',
+  VIDEO_TEMPLATE: 'VIDEO_TEMPLATE',
+  VIDEO_SUB_TEMPLATE: 'VIDEO_SUB_TEMPLATE',
+  VIDEO_ASPECT_RATIO: 'VIDEO_ASPECT_RATIO',
+  VIDEO_CONFIRM: 'VIDEO_CONFIRM',
+  VIDEO_PROCESSING: 'VIDEO_PROCESSING',
 } as const
 
 // Meta Cloud API base URL

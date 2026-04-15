@@ -23,6 +23,17 @@ export async function sendImage(to: string, imageUrl: string, caption?: string) 
   })
 }
 
+/** Send a video by URL */
+export async function sendVideo(to: string, videoUrl: string, caption?: string) {
+  return metaClient.post('/messages', {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to,
+    type: 'video',
+    video: { link: videoUrl, ...(caption ? { caption } : {}) },
+  })
+}
+
 /** Send a button reply message (up to 3 buttons) */
 export async function sendButtons(
   to: string,

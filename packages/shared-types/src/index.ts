@@ -45,6 +45,12 @@ export type SessionState =
   | 'FESTIVE_PROCESSING'
   | 'AWAITING_JEWEL_TYPE'
   | 'BATCH_JEWEL_TYPE'
+  | 'VIDEO_UPLOAD'
+  | 'VIDEO_TEMPLATE'
+  | 'VIDEO_SUB_TEMPLATE'
+  | 'VIDEO_ASPECT_RATIO'
+  | 'VIDEO_CONFIRM'
+  | 'VIDEO_PROCESSING'
 
 export interface SessionData {
   sourceImageUrl?: string
@@ -96,6 +102,11 @@ export interface SessionData {
   festiveBrandPhone?: string
   festiveFestivalName?: string
   festivePrompt?: string
+  // Video creation
+  videoSourceImageUrl?: string
+  videoTemplateId?: string
+  videoSubTemplateId?: string
+  videoAspectRatio?: '16:9' | '9:16'
 }
 
 // ─── Jewelry Analysis ─────────────────────────────────────────────────────────
@@ -124,7 +135,7 @@ export type PlanId = 'FREE' | 'STARTER' | 'SHOP' | 'PRO' | 'WHOLESALE'
 
 export const PLAN_CREDITS: Record<PlanId, number> = {
   FREE: 25,        // lifetime demo
-  STARTER: 100,    // per month
+  STARTER: 80,     // per month
   SHOP: 200,       // per month
   PRO: 500,        // per month
   WHOLESALE: 1400, // per month
@@ -152,11 +163,11 @@ export interface CreditPack {
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: 'pack_200',  credits: 200,  priceInr: 149 },
-  { id: 'pack_400',  credits: 400,  priceInr: 249 },
-  { id: 'pack_1000', credits: 1000, priceInr: 599 },
-  { id: 'pack_2500', credits: 2500, priceInr: 1299 },
-  { id: 'pack_5000', credits: 5000, priceInr: 2399 },
+  { id: 'pack_200',  credits: 200,  priceInr: 200 },
+  { id: 'pack_400',  credits: 400,  priceInr: 379 },
+  { id: 'pack_1000', credits: 1000, priceInr: 925 },
+  { id: 'pack_2500', credits: 2500, priceInr: 2250 },
+  { id: 'pack_5000', credits: 5000, priceInr: 4399 },
 ]
 
 // ─── Image Gen Job Payload ────────────────────────────────────────────────────
@@ -170,6 +181,17 @@ export interface ImageGenJobPayload {
   jewellType: string
   jewellDescription: string
   aspectRatio: '1:1' | '9:16'
+}
+
+export interface VideoGenJobPayload {
+  jobId: string
+  userId: string
+  userPhone: string
+  sourceImageUrl: string   // jewelry photo
+  logoUrl?: string         // brand logo (for templates that use it)
+  templateId: string
+  subTemplateId: string
+  aspectRatio: '16:9' | '9:16'
 }
 
 export interface FestivePostJobPayload {

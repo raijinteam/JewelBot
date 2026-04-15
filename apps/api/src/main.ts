@@ -15,6 +15,7 @@ import { razorpayRoutes } from './webhook/razorpay.router.js'
 import { startImageGenWorker } from './features/image-generation/image-gen.worker.js'
 import { startFestivePostWorker } from './features/festive-post/festive-post.worker.js'
 import { startCleanupWorker } from './storage/cleanup.worker.js'
+import { startVideoGenWorker } from './features/video-generation/video-gen.worker.js'
 
 const LANDING_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -84,11 +85,11 @@ const LANDING_HTML = `<!DOCTYPE html>
       <h2>Plans</h2>
       <div class="plans">
         <div class="plan"><div class="name">Free Demo</div><div class="price">₹0</div><div class="credits">25 credits</div></div>
-        <div class="plan"><div class="name">Starter</div><div class="price">₹99/mo</div><div class="credits">100 credits/month</div></div>
+        <div class="plan"><div class="name">Starter</div><div class="price">₹99/mo</div><div class="credits">80 credits/month</div></div>
         <div class="plan"><div class="name">Shop</div><div class="price">₹499/mo</div><div class="credits">200 credits/month</div></div>
         <div class="plan"><div class="name">Pro</div><div class="price">₹999/mo</div><div class="credits">500 credits/month</div></div>
         <div class="plan"><div class="name">Wholesale</div><div class="price">₹1,999/mo</div><div class="credits">1400 credits/month</div></div>
-        <div class="plan"><div class="name">Credit Packs</div><div class="price">From ₹149</div><div class="credits">200–5000 credits</div></div>
+        <div class="plan"><div class="name">Credit Packs</div><div class="price">From ₹200</div><div class="credits">200–5000 credits</div></div>
       </div>
     </div>
 
@@ -213,6 +214,7 @@ async function bootstrap() {
   // ── Start BullMQ workers ─────────────────────────────────────────────────
   const worker = startImageGenWorker()
   const festiveWorker = startFestivePostWorker()
+  const videoWorker = startVideoGenWorker()
   startCleanupWorker()
 
   // ── Start server ─────────────────────────────────────────────────────────
@@ -223,6 +225,7 @@ async function bootstrap() {
     logger.fatal({ err }, 'Failed to start server')
     await worker.close()
     await festiveWorker.close()
+    await videoWorker.close()
     process.exit(1)
   }
 
@@ -231,6 +234,7 @@ async function bootstrap() {
     logger.info('Shutting down...')
     await worker.close()
     await festiveWorker.close()
+    await videoWorker.close()
     await fastify.close()
     process.exit(0)
   }

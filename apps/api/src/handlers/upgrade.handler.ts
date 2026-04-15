@@ -29,7 +29,7 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
       `• 📄 GST Invoice Generator`,
       `• 📒 Udhaar Book`,
       `• ⚙️ Business Profile`,
-      `• 100 credits/month`,
+      `• 80 credits/month`,
       ``,
       `Or buy a *one-time credit pack* for photos.`,
       `_Each photo costs 5 credits._`,
@@ -39,7 +39,7 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
       {
         title: 'Monthly Plan',
         rows: [
-          { id: 'upgrade_starter', title: `Starter — ₹${starterPrice}/mo`, description: '100 credits/month + all features' },
+          { id: 'upgrade_starter', title: `Starter — ₹${starterPrice}/mo`, description: '80 credits/month + all features' },
         ],
       },
       {
@@ -47,7 +47,7 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
         rows: CREDIT_PACKS.map((pack) => ({
           id: pack.id,
           title: `${pack.credits} Credits — ₹${pack.priceInr}`,
-          description: `₹${(pack.priceInr / pack.credits).toFixed(1)}/credit`,
+          description: `₹${(pack.priceInr / pack.credits).toFixed(2)}/credit`,
         })),
       },
     ],

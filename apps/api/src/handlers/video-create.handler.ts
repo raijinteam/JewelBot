@@ -85,26 +85,7 @@ export async function handleVideoTemplate(
     return
   }
 
-  // If only one sub-template, auto-select it → show preview → ask for image
-  if (template.subTemplates.length === 1) {
-    const sub = template.subTemplates[0]
-    await transitionState(fastify.redis, phone, 'VIDEO_UPLOAD', {
-      videoTemplateId: templateId,
-      videoSubTemplateId: sub.id,
-    })
-
-    // Show preview
-    if (sub.previewUrl && !sub.previewUrl.includes('placehold.co')) {
-      await sendImage(phone, sub.previewUrl, `🎬 *${template.name}* > *${sub.name}*`)
-    } else {
-      await sendText(phone, `🎬 *${template.name}* > *${sub.name}*`)
-    }
-
-    await sendText(phone, '📸 Now send me a clear photo of your *jewelry item*.')
-    return
-  }
-
-  // Multiple sub-templates — show selection
+  // Always show sub-template selection
   await transitionState(fastify.redis, phone, 'VIDEO_SUB_TEMPLATE', {
     videoTemplateId: templateId,
   })

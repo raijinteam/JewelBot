@@ -13,7 +13,7 @@ import { CREDIT_COST_VIDEO } from '../config/constants.js'
 import { logger } from '../shared/logger.js'
 import { randomUUID } from 'node:crypto'
 
-// ─── Entry point: start video creation flow ─────────────────────────────────
+// ─── Entry point: credit check → show template list ─────────────────────────
 
 export async function startVideoCreate(
   phone: string,
@@ -29,66 +29,11 @@ export async function startVideoCreate(
     return
   }
 
-  await setSession(fastify.redis, phone, 'VIDEO_UPLOAD', {})
-  await sendText(phone, `🎬 *Create Video*\n\nSend me a clear photo of your *jewelry item*.\n\n💳 Cost: *${CREDIT_COST_VIDEO} credits* per video.`)
+  await setSession(fastify.redis, phone, 'VIDEO_TEMPLATE', {})
+  await sendVideoTemplateList(phone)
 }
 
-// ─── Step 1: Receive jewelry image ──────────────────────────────────────────
-
-export async function handleVideoUpload(
-  message: MetaMessage,
-  phone: string,
-  fastify: FastifyInstance,
-): Promise<void> {
-  if (message.type !== 'image') {
-    await sendText(phone, '📸 Please send a *photo* of your jewelry item.')
-    return
-  }
-
-  const img = message as MetaImageMessage
-  const user = await findOrCreateUser(phone)
-
-  await sendText(phone, '⏳ Uploading your photo...')
-
-  try {
-    const buffer = await downloadMediaBuffer(img.image.id)
-    const sourceImageUrl = await uploadBuffer(buffer, `jewel/source/${user.id}`)
-
-    // Auto-skip template + sub-template selection if only one of each
-    if (VIDEO_TEMPLATES.length === 1) {
-      const template = VIDEO_TEMPLATES[0]
-      if (template.subTemplates.length === 1) {
-        const sub = template.subTemplates[0]
-        await transitionState(fastify.redis, phone, 'VIDEO_ASPECT_RATIO', {
-          videoSourceImageUrl: sourceImageUrl,
-          videoTemplateId: template.id,
-          videoSubTemplateId: sub.id,
-        })
-
-        // Show preview
-        if (sub.previewUrl && !sub.previewUrl.includes('placehold.co')) {
-          await sendImage(phone, sub.previewUrl, `🎬 *${template.name}* > *${sub.name}*`)
-        } else {
-          await sendText(phone, `🎬 *${template.name}* > *${sub.name}*`)
-        }
-
-        await sendAspectRatioButtons(phone)
-        return
-      }
-    }
-
-    await transitionState(fastify.redis, phone, 'VIDEO_TEMPLATE', {
-      videoSourceImageUrl: sourceImageUrl,
-    })
-
-    await sendVideoTemplateList(phone)
-  } catch (err) {
-    logger.error({ err, phone }, 'Failed to upload video source image')
-    await sendText(phone, "Couldn't process your image. Please send it again.")
-  }
-}
-
-// ─── Step 2: Template selection ─────────────────────────────────────────────
+// ─── Step 1: Template selection ─────────────────────────────────────────────
 
 async function sendVideoTemplateList(phone: string): Promise<void> {
   if (VIDEO_TEMPLATES.length === 0) {
@@ -98,7 +43,7 @@ async function sendVideoTemplateList(phone: string): Promise<void> {
 
   await sendList(
     phone,
-    '🎬 *Choose a Video Style*\n\nSelect a template for your video:',
+    `🎬 *Create Video*\n\nChoose a video style:\n\n💳 Cost: *${CREDIT_COST_VIDEO} credits* per video.`,
     '🎥 Select Style',
     [
       {
@@ -132,7 +77,6 @@ export async function handleVideoTemplate(
         ? interactive.button_reply.id
         : ''
 
-  // Strip the vtpl_ prefix we added for uniqueness
   const templateId = replyId.replace(/^vtpl_/, '')
   const template = getVideoTemplate(templateId)
 
@@ -141,34 +85,33 @@ export async function handleVideoTemplate(
     return
   }
 
-  await transitionState(fastify.redis, phone, 'VIDEO_SUB_TEMPLATE', {
-    videoTemplateId: templateId,
-  })
-
-  // If only one sub-template, auto-select it
+  // If only one sub-template, auto-select it → show preview → ask for image
   if (template.subTemplates.length === 1) {
     const sub = template.subTemplates[0]
-    await transitionState(fastify.redis, phone, 'VIDEO_ASPECT_RATIO', {
+    await transitionState(fastify.redis, phone, 'VIDEO_UPLOAD', {
       videoTemplateId: templateId,
       videoSubTemplateId: sub.id,
     })
 
-    // Show preview if available
+    // Show preview
     if (sub.previewUrl && !sub.previewUrl.includes('placehold.co')) {
       await sendImage(phone, sub.previewUrl, `🎬 *${template.name}* > *${sub.name}*`)
     } else {
       await sendText(phone, `🎬 *${template.name}* > *${sub.name}*`)
     }
 
-    await sendAspectRatioButtons(phone)
+    await sendText(phone, '📸 Now send me a clear photo of your *jewelry item*.')
     return
   }
 
   // Multiple sub-templates — show selection
+  await transitionState(fastify.redis, phone, 'VIDEO_SUB_TEMPLATE', {
+    videoTemplateId: templateId,
+  })
   await sendSubTemplateList(phone, template.id, template.name, template.subTemplates)
 }
 
-// ─── Step 3: Sub-template selection ─────────────────────────────────────────
+// ─── Step 2: Sub-template selection (skipped if only one) ───────────────────
 
 async function sendSubTemplateList(
   phone: string,
@@ -220,7 +163,6 @@ export async function handleVideoSubTemplate(
         ? interactive.button_reply.id
         : ''
 
-  // Extract sub-template ID: vsub_{templateId}_{subId} → subId
   const subTemplateId = replyId.replace(`vsub_${templateId}_`, '')
   const sub = getVideoSubTemplate(templateId, subTemplateId)
 
@@ -229,7 +171,7 @@ export async function handleVideoSubTemplate(
     return
   }
 
-  await transitionState(fastify.redis, phone, 'VIDEO_ASPECT_RATIO', {
+  await transitionState(fastify.redis, phone, 'VIDEO_UPLOAD', {
     videoSubTemplateId: sub.id,
   })
 
@@ -240,10 +182,42 @@ export async function handleVideoSubTemplate(
     await sendText(phone, `🎬 *${template.name}* > *${sub.name}*`)
   }
 
-  await sendAspectRatioButtons(phone)
+  await sendText(phone, '📸 Now send me a clear photo of your *jewelry item*.')
 }
 
-// ─── Step 4: Aspect ratio selection ─────────────────────────────────────────
+// ─── Step 3: Receive jewelry image → ask aspect ratio ───────────────────────
+
+export async function handleVideoUpload(
+  message: MetaMessage,
+  phone: string,
+  fastify: FastifyInstance,
+): Promise<void> {
+  if (message.type !== 'image') {
+    await sendText(phone, '📸 Please send a *photo* of your jewelry item.')
+    return
+  }
+
+  const img = message as MetaImageMessage
+  const user = await findOrCreateUser(phone)
+
+  await sendText(phone, '⏳ Uploading your photo...')
+
+  try {
+    const buffer = await downloadMediaBuffer(img.image.id)
+    const sourceImageUrl = await uploadBuffer(buffer, `jewel/source/${user.id}`)
+
+    await transitionState(fastify.redis, phone, 'VIDEO_ASPECT_RATIO', {
+      videoSourceImageUrl: sourceImageUrl,
+    })
+
+    await sendAspectRatioButtons(phone)
+  } catch (err) {
+    logger.error({ err, phone }, 'Failed to upload video source image')
+    await sendText(phone, "Couldn't process your image. Please send it again.")
+  }
+}
+
+// ─── Step 4: Aspect ratio → confirmation ────────────────────────────────────
 
 async function sendAspectRatioButtons(phone: string): Promise<void> {
   await sendButtons(

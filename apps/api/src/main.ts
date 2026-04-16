@@ -93,7 +93,7 @@ const LANDING_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <p class="footer">Powered by SvaraAI &bull; Payments secured by Razorpay</p>
+    <p class="footer">Built by <strong>Raijin</strong> &bull; Powered by SvaraAI &bull; Payments secured by Razorpay</p>
   </div>
 </body>
 </html>`

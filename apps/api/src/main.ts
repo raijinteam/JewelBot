@@ -81,19 +81,7 @@ const LANDING_HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="pricing">
-      <h2>Plans</h2>
-      <div class="plans">
-        <div class="plan"><div class="name">Free Demo</div><div class="price">₹0</div><div class="credits">25 credits</div></div>
-        <div class="plan"><div class="name">Starter</div><div class="price">₹99/mo</div><div class="credits">80 credits/month</div></div>
-        <div class="plan"><div class="name">Shop</div><div class="price">₹499/mo</div><div class="credits">200 credits/month</div></div>
-        <div class="plan"><div class="name">Pro</div><div class="price">₹999/mo</div><div class="credits">500 credits/month</div></div>
-        <div class="plan"><div class="name">Wholesale</div><div class="price">₹1,999/mo</div><div class="credits">1400 credits/month</div></div>
-        <div class="plan"><div class="name">Credit Packs</div><div class="price">From ₹200</div><div class="credits">200–5000 credits</div></div>
-      </div>
-    </div>
-
-    <p class="footer">Built by <strong>Raijin</strong> &bull; Powered by SvaraAI &bull; Payments secured by Razorpay</p>
+    <p class="footer">Built by <strong style="font-size: 16px; color: #fff; letter-spacing: 1px;">Raijin</strong> &bull; Powered by SvaraAI &bull; Payments secured by Razorpay</p>
   </div>
 </body>
 </html>`

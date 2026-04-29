@@ -5,6 +5,8 @@ import { setSession } from '../session/session.service.js'
 import { findOrCreateUser } from '../users/user.service.js'
 import { getCreditBalance, hasPaidPlan } from '../billing/credits.service.js'
 import { CREDIT_COST_VIDEO } from '../config/constants.js'
+import { getPlanPrice } from '../billing/app-config.service.js'
+import { getDisplayPrice } from '../billing/pricing.service.js'
 import { showLiveRates } from './price-calc.handler.js'
 import { startBillingCalc } from './billing-calc.handler.js'
 import { showLedgerMenu } from './ledger.handler.js'
@@ -85,12 +87,14 @@ export async function handleIdleInteractive(
     const user = await findOrCreateUser(phone)
     const paid = await hasPaidPlan(user.id)
     if (!paid) {
+      const starterBaseInr = await getPlanPrice(fastify.redis, 'starter')
+      const starterPrice = getDisplayPrice(starterBaseInr, phone)
       await sendButtons(
         phone,
         [
           `🔒 *Subscription Required*`,
           ``,
-          `Subscribe to *Starter Plan (₹99/mo)* to unlock:`,
+          `Subscribe to *Starter Plan (${starterPrice.display}/mo)* to unlock:`,
           `• 💰 Live Gold & Silver Rates`,
           `• 📋 Billing Calculator`,
           `• 📄 GST Invoice Generator`,

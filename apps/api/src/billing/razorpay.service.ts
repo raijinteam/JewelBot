@@ -28,10 +28,10 @@ export async function createPaymentLink(params: {
         currency: 'INR',
         description: params.description,
         customer: {
-          contact: params.customerPhone.startsWith('91') ? `+${params.customerPhone}` : `+91${params.customerPhone}`,
+          contact: params.customerPhone.startsWith('+') ? params.customerPhone : `+${params.customerPhone}`,
         },
         notify: {
-          sms: true,
+          sms: params.customerPhone.startsWith('91'),  // SMS only for India
           whatsapp: false,
         },
         reminder_enable: true,

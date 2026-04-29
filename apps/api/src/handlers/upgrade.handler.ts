@@ -4,6 +4,7 @@ import { sendText, sendList } from '../whatsapp/wa.messages.js'
 import { setSession, resetSession } from '../session/session.service.js'
 import { getPlanPrice } from '../billing/app-config.service.js'
 import { createPaymentLink } from '../billing/razorpay.service.js'
+import { getDisplayPrice } from '../billing/pricing.service.js'
 import { env } from '../config/env.js'
 import { CREDIT_PACKS } from '@jewel/shared-types'
 
@@ -14,7 +15,8 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
     return
   }
 
-  const starterPrice = await getPlanPrice(fastify.redis, 'starter')
+  const starterBaseInr = await getPlanPrice(fastify.redis, 'starter')
+  const starterPrice = getDisplayPrice(starterBaseInr, phone)
 
   await setSession(fastify.redis, phone, 'UPGRADE_SELECT', {})
 
@@ -23,7 +25,7 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
     [
       `⬆️ *Upgrade Your Plan*`,
       ``,
-      `*Starter Plan (₹${starterPrice}/mo)* unlocks:`,
+      `*Starter Plan (${starterPrice.display}/mo)* unlocks:`,
       `• 💰 Live Gold & Silver Rates`,
       `• 📋 Billing Calculator`,
       `• 📄 GST Invoice Generator`,
@@ -39,16 +41,19 @@ export async function showUpgradeMenu(phone: string, fastify: FastifyInstance): 
       {
         title: 'Monthly Plan',
         rows: [
-          { id: 'upgrade_starter', title: `Starter — ₹${starterPrice}/mo`, description: '80 credits/month + all features' },
+          { id: 'upgrade_starter', title: `Starter — ${starterPrice.display}/mo`, description: '80 credits/month + all features' },
         ],
       },
       {
         title: 'Buy Credits (One-time)',
-        rows: CREDIT_PACKS.map((pack) => ({
-          id: pack.id,
-          title: `${pack.credits} Credits — ₹${pack.priceInr}`,
-          description: `₹${(pack.priceInr / pack.credits).toFixed(2)}/credit`,
-        })),
+        rows: CREDIT_PACKS.map((pack) => {
+          const price = getDisplayPrice(pack.priceInr, phone, pack.credits)
+          return {
+            id: pack.id,
+            title: `${pack.credits} Credits — ${price.display}`,
+            description: price.perCreditDisplay ?? '',
+          }
+        }),
       },
     ],
     '💳 Plans & Credits',
@@ -76,20 +81,22 @@ export async function handleUpgradeSelect(
   // Handle credit pack selection directly
   const pack = CREDIT_PACKS.find((p) => p.id === replyId)
   if (pack) {
-    await sendText(phone, `⏳ Generating your payment link for *${pack.credits} credits (₹${pack.priceInr})*...`)
+    const price = getDisplayPrice(pack.priceInr, phone, pack.credits)
+
+    await sendText(phone, `⏳ Generating your payment link for *${pack.credits} credits (${price.display})*...`)
 
     try {
       const link = await createPaymentLink({
-        amount: pack.priceInr,
+        amount: price.inrCharge,
         customerPhone: phone,
         planName: `CREDIT_PACK_${pack.credits}`,
-        description: `SvaraAI ${pack.credits} Credits Pack — ₹${pack.priceInr}`,
+        description: `SvaraAI ${pack.credits} Credits Pack — ${price.display}`,
       })
 
       await sendText(
         phone,
         [
-          `🛒 *${pack.credits} Credits — ₹${pack.priceInr}*`,
+          `🛒 *${pack.credits} Credits — ${price.display}*`,
           ``,
           `Tap the link below to complete payment:`,
           `👉 ${link.short_url}`,
@@ -116,22 +123,23 @@ export async function handleUpgradeSelect(
     return
   }
 
-  const price = await getPlanPrice(fastify.redis, selected.plan)
+  const baseInr = await getPlanPrice(fastify.redis, selected.plan)
+  const price = getDisplayPrice(baseInr, phone)
 
-  await sendText(phone, `⏳ Generating your payment link for *${selected.label} Plan (₹${price}/mo)*...`)
+  await sendText(phone, `⏳ Generating your payment link for *${selected.label} Plan (${price.display}/mo)*...`)
 
   try {
     const link = await createPaymentLink({
-      amount: price,
+      amount: price.inrCharge,
       customerPhone: phone,
       planName: selected.plan,
-      description: `SvaraAI ${selected.label} Plan — ₹${price}/month`,
+      description: `SvaraAI ${selected.label} Plan — ${price.display}/month`,
     })
 
     await sendText(
       phone,
       [
-        `💳 *${selected.label} Plan — ₹${price}/month*`,
+        `💳 *${selected.label} Plan — ${price.display}/month*`,
         ``,
         `Tap the link below to complete payment:`,
         `👉 ${link.short_url}`,
